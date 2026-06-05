@@ -12,6 +12,7 @@ Key boundaries:
 - `chrome.storage.session` stores temporary sensitive mappings and workspace data.
 - The service worker owns session storage access.
 - Content scripts do not directly read `chrome.storage.session`.
+- The floating DSN Rules tab uses service-worker messages only and does not store DSN JSON in local storage.
 - Restored real data stays inside Sanitas.
 - Sanitas does not auto-submit anything to ChatGPT.
 

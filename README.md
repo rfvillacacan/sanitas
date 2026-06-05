@@ -103,6 +103,8 @@ You can adjust:
 
 Custom terms and DSN rules may be sensitive, so Sanitas stores active values only for the current browser session.
 
+The floating Sanitas window also has a `DSN Rules` tab. Use it when you want quick access to session-only DSN JSON rules while testing in ChatGPT. Insert a safe template, validate it, apply it to the current session, then return to the `Text` tab and use `Clean`.
+
 ## Troubleshooting
 
 If Sanitas does not appear on ChatGPT:

@@ -2,6 +2,8 @@
 
 DSN means Detection Specification Notation. It is Sanitas' safe JSON rule format for adding current-session custom detection rules without giving users raw regex execution.
 
+For template-button usage, examples, and common options, see [DSN Template Guide](dsn-template-guide.md).
+
 Raw regex import is not allowed. DSN rules are validated against a strict allowlist schema, and unsafe fields such as `pattern`, `regex`, `flags`, `script`, `code`, `eval`, `function`, remote URLs, and similar executable or remote-update fields are rejected.
 
 ## Workflow

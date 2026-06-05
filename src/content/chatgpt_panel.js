@@ -36,12 +36,101 @@
     RESTORE_TEXT: 'SANITAS_RESTORE_TEXT',
     CLEAR_SESSION: 'SANITAS_CLEAR_SESSION',
     SAVE_WORKSPACE_STATE: 'SANITAS_SAVE_WORKSPACE_STATE',
-    GET_WORKSPACE_STATE: 'SANITAS_GET_WORKSPACE_STATE'
+    GET_WORKSPACE_STATE: 'SANITAS_GET_WORKSPACE_STATE',
+    VALIDATE_DSN_RULES: 'SANITAS_VALIDATE_DSN_RULES',
+    IMPORT_DSN_RULES: 'SANITAS_IMPORT_DSN_RULES',
+    CLEAR_DSN_RULES: 'SANITAS_CLEAR_DSN_RULES',
+    GET_DSN_SUMMARY: 'SANITAS_GET_DSN_SUMMARY'
+  });
+  const PANEL_TABS = Object.freeze({
+    TEXT: 'text',
+    DSN: 'dsn'
   });
   const OUTPUT_STATES = Object.freeze({
     EMPTY: 'empty',
     SANITIZED: 'sanitized',
     RESTORED: 'restored'
+  });
+  const DSN_RULE_TYPES = Object.freeze({
+    LITERAL_TERMS: 'literal_terms',
+    LABELED_VALUE: 'labeled_value',
+    PREFIX_TOKEN: 'prefix_token',
+    STRUCTURED_ID: 'structured_id',
+    CONTEXT_VALUE: 'context_value'
+  });
+  const DSN_TEMPLATE_TOOLTIPS = Object.freeze({
+    [DSN_RULE_TYPES.LITERAL_TERMS]: 'Detect exact literal terms. Example: Project Titan -> [[CUSTOM_TERM_0001]]. Options: terms, case_sensitive, match_word_boundary.',
+    [DSN_RULE_TYPES.LABELED_VALUE]: 'Detect a value after a label. Example: DB_PASS=SafeDummyValue -> DB_PASS=[[DATABASE_SECRET_0001]]. Options: labels, separators, value_mode.',
+    [DSN_RULE_TYPES.PREFIX_TOKEN]: 'Detect tokens with a known prefix. Example: sk_test_ABCDEF1234567890 -> [[API_KEY_0001]]. Options: prefixes, min_length, max_length, allowed_chars.',
+    [DSN_RULE_TYPES.STRUCTURED_ID]: 'Detect structured IDs. Example: DOC-INT-445566 -> [[DOCUMENT_ID_0001]]. Options: prefixes, segments.',
+    [DSN_RULE_TYPES.CONTEXT_VALUE]: 'Detect weak values only near trusted context. Example: CVV: 123 -> CVV: [[CARD_SECURITY_CODE_0001]]. Options: context_labels, separators, value_kind.'
+  });
+  const DSN_TEMPLATE_RULES = Object.freeze({
+    [DSN_RULE_TYPES.LITERAL_TERMS]: Object.freeze({
+      id: 'PROJECT_NAMES',
+      type: DSN_RULE_TYPES.LITERAL_TERMS,
+      enabled: true,
+      placeholder_type: 'CUSTOM_TERM',
+      priority: 500,
+      description: 'Dummy project and organization names.',
+      terms: Object.freeze(['Project Titan', 'Acme Corp']),
+      case_sensitive: false,
+      match_word_boundary: true
+    }),
+    [DSN_RULE_TYPES.LABELED_VALUE]: Object.freeze({
+      id: 'DB_PASSWORD',
+      type: DSN_RULE_TYPES.LABELED_VALUE,
+      enabled: true,
+      placeholder_type: 'DATABASE_SECRET',
+      priority: 900,
+      description: 'Dummy database password labels.',
+      labels: Object.freeze(['DB_PASS']),
+      separators: Object.freeze(['=', ':']),
+      value_mode: 'until_whitespace',
+      case_sensitive: false
+    }),
+    [DSN_RULE_TYPES.PREFIX_TOKEN]: Object.freeze({
+      id: 'TEST_API_KEY',
+      type: DSN_RULE_TYPES.PREFIX_TOKEN,
+      enabled: true,
+      placeholder_type: 'API_KEY',
+      priority: 950,
+      description: 'Dummy test API key prefix.',
+      prefixes: Object.freeze(['sk_test_']),
+      min_length: 16,
+      max_length: 120,
+      allowed_chars: 'alpha_num_underscore_dash',
+      case_sensitive: true
+    }),
+    [DSN_RULE_TYPES.STRUCTURED_ID]: Object.freeze({
+      id: 'INTERNAL_DOCUMENT_ID',
+      type: DSN_RULE_TYPES.STRUCTURED_ID,
+      enabled: true,
+      placeholder_type: 'DOCUMENT_ID',
+      priority: 700,
+      description: 'Dummy internal document ids.',
+      prefixes: Object.freeze(['DOC-INT-']),
+      segments: Object.freeze([Object.freeze({
+        kind: 'digits',
+        min: 4,
+        max: 12
+      })]),
+      case_sensitive: true
+    }),
+    [DSN_RULE_TYPES.CONTEXT_VALUE]: Object.freeze({
+      id: 'CARD_SECURITY_CODE',
+      type: DSN_RULE_TYPES.CONTEXT_VALUE,
+      enabled: true,
+      placeholder_type: 'CARD_SECURITY_CODE',
+      priority: 850,
+      description: 'Dummy card security-code context.',
+      context_labels: Object.freeze(['CVV']),
+      separators: Object.freeze([':', '=']),
+      value_kind: 'digits',
+      min_length: 3,
+      max_length: 4,
+      case_sensitive: false
+    })
   });
   const MIN_WINDOW_WIDTH = 320;
   const MAX_WINDOW_WIDTH = 720;
@@ -264,6 +353,41 @@
         padding: 12px 14px 14px;
       }
 
+      .sanitas-tab-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border: 1px solid var(--sanitas-border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .sanitas-tab {
+        min-height: 32px;
+        border: 0;
+        background: transparent;
+        color: var(--sanitas-window-color);
+        font: 12px/1.2 Arial, sans-serif;
+        cursor: pointer;
+      }
+
+      .sanitas-tab[aria-selected="true"] {
+        background: var(--sanitas-accent);
+        color: #ffffff;
+        font-weight: 700;
+      }
+
+      .sanitas-tab-panel {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .sanitas-tab-panel[hidden] {
+        display: none !important;
+      }
+
       .sanitas-mode-toggle {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -364,6 +488,61 @@
         color: var(--sanitas-muted);
         font-size: 12px;
         line-height: 1.45;
+      }
+
+      .sanitas-dsn-help {
+        margin: 0;
+        color: var(--sanitas-muted);
+        font-size: 11px;
+        line-height: 1.35;
+      }
+
+      .sanitas-dsn-editor {
+        box-sizing: border-box;
+        width: 100%;
+        flex: 1;
+        min-height: 132px;
+        resize: none;
+        border: 1px solid var(--sanitas-border);
+        border-radius: 8px;
+        padding: 9px;
+        background: var(--sanitas-window-background);
+        color: var(--sanitas-window-color);
+        font: 11px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+
+      .sanitas-dsn-summary,
+      .sanitas-dsn-validation {
+        margin: 0;
+        color: var(--sanitas-muted);
+        font-size: 11px;
+        line-height: 1.35;
+      }
+
+      .sanitas-dsn-validation {
+        max-height: 72px;
+        overflow: auto;
+      }
+
+      .sanitas-dsn-validation p {
+        margin: 0;
+      }
+
+      .sanitas-dsn-validation ul {
+        margin: 4px 0 0;
+        padding-left: 18px;
+      }
+
+      .sanitas-dsn-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .sanitas-dsn-actions .sanitas-button {
+        min-height: 28px;
+        padding: 0 8px;
+        font-size: 11px;
       }
 
       .sanitas-resize-grip {
@@ -473,6 +652,9 @@
     const main = document.createElement('main');
     main.className = 'sanitas-main';
 
+    const panelTabs = createPanelTabs();
+    const textPanel = document.createElement('section');
+    const dsnPanel = createDsnEditorPanel();
     const modeToggle = createModeToggle();
     const topTextarea = createTextareaField('sanitasTopTextarea', 'Input', createButton('Paste'));
     const bottomTextarea = createTextareaField('sanitasBottomTextarea', 'Output', createButton('Copy'), { readonly: true });
@@ -487,6 +669,13 @@
       scheduleWorkspaceSave();
       scheduleProcessing();
     });
+
+    textPanel.id = 'sanitasTextPanel';
+    textPanel.className = 'sanitas-tab-panel';
+    textPanel.dataset.sanitasTabPanel = PANEL_TABS.TEXT;
+    textPanel.setAttribute('role', 'tabpanel');
+    textPanel.setAttribute('aria-labelledby', 'sanitasTextTab');
+    textPanel.append(modeToggle, topTextarea.field, bottomTextarea.field);
 
     status.className = 'sanitas-status';
     status.dataset.sanitasStatus = 'true';
@@ -514,7 +703,7 @@
       setCollapsedState(false, { save: true });
     });
 
-    main.append(modeToggle, topTextarea.field, bottomTextarea.field, status);
+    main.append(panelTabs.tabList, textPanel, dsnPanel.panel, status);
     panel.append(header, main, resizeGrip, clearModal.backdrop);
     root.append(panel, sideTab);
 
@@ -526,12 +715,27 @@
       topTextarea: topTextarea.textarea,
       bottomTextarea: bottomTextarea.textarea,
       status,
+      tabButtons: panelTabs.buttons,
+      tabPanels: [textPanel, dsnPanel.panel],
       modeButtons: Array.from(modeToggle.querySelectorAll('[data-sanitas-mode-option]')),
+      dsnTextarea: dsnPanel.textarea,
+      dsnSummary: dsnPanel.summary,
+      dsnValidation: dsnPanel.validation,
       clearModal: clearModal.backdrop,
       clearModalCancelButton: clearModal.cancelButton,
       clearModalConfirmButton: clearModal.confirmButton,
-      buttons: [clearSessionButton, topTextarea.action, bottomTextarea.action]
+      buttons: [
+        clearSessionButton,
+        topTextarea.action,
+        bottomTextarea.action,
+        ...panelTabs.buttons,
+        ...dsnPanel.buttons
+      ]
     };
+
+    setActiveTab(PANEL_TABS.TEXT);
+    renderDsnSummary();
+    refreshDsnSummary();
 
     return root;
   }
@@ -572,6 +776,128 @@
     backdrop.append(dialog);
 
     return { backdrop, cancelButton, confirmButton };
+  }
+
+  function createPanelTabs() {
+    const tabList = document.createElement('div');
+    const textTab = createPanelTab(PANEL_TABS.TEXT, 'Text', 'sanitasTextTab', 'sanitasTextPanel');
+    const dsnTab = createPanelTab(PANEL_TABS.DSN, 'DSN Rules', 'sanitasDsnTab', 'sanitasDsnPanel');
+
+    tabList.className = 'sanitas-tab-list';
+    tabList.setAttribute('role', 'tablist');
+    tabList.setAttribute('aria-label', 'Sanitas workspace tabs');
+    tabList.append(textTab, dsnTab);
+
+    return {
+      tabList,
+      buttons: [textTab, dsnTab]
+    };
+  }
+
+  function createPanelTab(tabName, label, id, panelId) {
+    const button = document.createElement('button');
+
+    button.id = id;
+    button.className = 'sanitas-tab';
+    button.type = 'button';
+    button.dataset.sanitasTab = tabName;
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-selected', 'false');
+    button.setAttribute('aria-controls', panelId);
+    button.textContent = label;
+    button.addEventListener('click', () => {
+      setActiveTab(tabName);
+    });
+
+    return button;
+  }
+
+  function createDsnEditorPanel() {
+    const panel = document.createElement('section');
+    const help = document.createElement('p');
+    const textarea = document.createElement('textarea');
+    const summary = document.createElement('p');
+    const validation = document.createElement('div');
+    const templateActions = document.createElement('div');
+    const actionRow = document.createElement('div');
+    const fullExampleButton = createButton('Insert full example ruleset');
+    const prettyButton = createButton('Pretty Format JSON');
+    const validateButton = createButton('Validate Rules');
+    const applyButton = createButton('Apply to Current Session');
+    const clearRulesButton = createButton('Clear Session Rules');
+    const buttons = [];
+
+    panel.id = 'sanitasDsnPanel';
+    panel.className = 'sanitas-tab-panel';
+    panel.dataset.sanitasTabPanel = PANEL_TABS.DSN;
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', 'sanitasDsnTab');
+    panel.hidden = true;
+
+    help.className = 'sanitas-dsn-help';
+    help.textContent = 'Session-only DSN rules. Raw regex is rejected. Use templates, validate, then apply.';
+
+    textarea.id = 'sanitasDsnRulesTextarea';
+    textarea.className = 'sanitas-dsn-editor';
+    textarea.setAttribute('aria-label', 'DSN JSON editor');
+    textarea.spellcheck = false;
+    textarea.value = stringifyDsn(createDsnExampleRuleset());
+    textarea.addEventListener('input', clearDsnValidation);
+
+    summary.className = 'sanitas-dsn-summary';
+    summary.dataset.sanitasDsnSummary = 'true';
+
+    validation.className = 'sanitas-dsn-validation';
+    validation.dataset.sanitasDsnValidation = 'true';
+    validation.setAttribute('aria-live', 'polite');
+
+    templateActions.className = 'sanitas-dsn-actions';
+    templateActions.setAttribute('aria-label', 'DSN template helpers');
+
+    for (const type of Object.values(DSN_RULE_TYPES)) {
+      const button = createDsnTemplateButton(type);
+
+      templateActions.append(button);
+      buttons.push(button);
+    }
+
+    fullExampleButton.title = 'Replace the editor with a complete safe dummy ruleset using all five DSN rule types.';
+    prettyButton.title = 'Format valid DSN JSON with two-space indentation. Does not store rules.';
+    validateButton.title = 'Check DSN JSON before applying it to the current browser session.';
+    applyButton.title = 'Validate and store active DSN rules only for the current browser session.';
+    clearRulesButton.title = 'Remove active DSN rules from the current browser session.';
+
+    fullExampleButton.addEventListener('click', handleDsnFullExample);
+    prettyButton.addEventListener('click', handleDsnPrettyFormat);
+    validateButton.addEventListener('click', handleDsnValidate);
+    applyButton.addEventListener('click', handleDsnApply);
+    clearRulesButton.addEventListener('click', handleDsnClearRules);
+
+    actionRow.className = 'sanitas-dsn-actions';
+    actionRow.append(fullExampleButton, prettyButton, validateButton, applyButton, clearRulesButton);
+    buttons.push(fullExampleButton, prettyButton, validateButton, applyButton, clearRulesButton);
+
+    panel.append(help, textarea, summary, validation, templateActions, actionRow);
+
+    return {
+      panel,
+      textarea,
+      summary,
+      validation,
+      buttons
+    };
+  }
+
+  function createDsnTemplateButton(type) {
+    const button = createButton(`Insert ${type} template`);
+
+    button.dataset.sanitasDsnTemplate = type;
+    button.title = DSN_TEMPLATE_TOOLTIPS[type] || 'Insert a safe DSN template.';
+    button.addEventListener('click', () => {
+      handleDsnInsertTemplate(type);
+    });
+
+    return button;
   }
 
   function createModeToggle() {
@@ -638,6 +964,406 @@
     button.textContent = label;
 
     return button;
+  }
+
+  function setActiveTab(tabName) {
+    const safeTab = Object.values(PANEL_TABS).includes(tabName) ? tabName : PANEL_TABS.TEXT;
+
+    if (!elements) {
+      return;
+    }
+
+    for (const button of elements.tabButtons) {
+      const isActive = button.dataset.sanitasTab === safeTab;
+
+      button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      button.tabIndex = isActive ? 0 : -1;
+    }
+
+    for (const panel of elements.tabPanels) {
+      panel.hidden = panel.dataset.sanitasTabPanel !== safeTab;
+    }
+
+    if (safeTab === PANEL_TABS.DSN) {
+      refreshDsnSummary();
+    }
+  }
+
+  function handleDsnInsertTemplate(type) {
+    if (!elements || !elements.dsnTextarea) {
+      return;
+    }
+
+    const result = insertDsnTemplateIntoText(elements.dsnTextarea.value, type);
+
+    if (!result.ok) {
+      renderDsnValidationErrors([result.error]);
+      setStatus('Invalid DSN ruleset.');
+      return;
+    }
+
+    elements.dsnTextarea.value = result.text;
+    clearDsnValidation();
+    setStatus('DSN template inserted. Validate before applying.');
+  }
+
+  function handleDsnFullExample() {
+    if (!elements || !elements.dsnTextarea) {
+      return;
+    }
+
+    elements.dsnTextarea.value = stringifyDsn(createDsnExampleRuleset());
+    clearDsnValidation();
+    setStatus('Safe DSN example loaded. Validate before applying.');
+  }
+
+  function handleDsnPrettyFormat() {
+    if (!elements || !elements.dsnTextarea) {
+      return;
+    }
+
+    const result = formatDsnJson(elements.dsnTextarea.value);
+
+    if (!result.ok) {
+      renderDsnValidationErrors([result.error]);
+      setStatus('Invalid DSN ruleset.');
+      return;
+    }
+
+    elements.dsnTextarea.value = result.text;
+    clearDsnValidation();
+    setStatus('DSN JSON formatted.');
+  }
+
+  async function handleDsnValidate() {
+    const validation = await validateCurrentDsn();
+
+    if (!validation) {
+      setStatus('DSN rules could not be validated.');
+      return;
+    }
+
+    renderDsnValidationResult(validation);
+  }
+
+  async function handleDsnApply() {
+    const validation = await validateCurrentDsn();
+
+    if (!validation) {
+      setStatus('DSN rules could not be validated.');
+      return;
+    }
+
+    if (validation.ok !== true) {
+      renderDsnValidationResult(validation);
+      return;
+    }
+
+    setBusy(true);
+
+    try {
+      const response = await sendRuntimeMessage({
+        type: MESSAGE_TYPES.IMPORT_DSN_RULES,
+        payload: {
+          text: elements.dsnTextarea.value
+        }
+      });
+
+      if (!isOkResponse(response)) {
+        renderDsnValidationErrors(response && response.error ? [response.error] : []);
+        setStatus('Invalid DSN ruleset.');
+        return;
+      }
+
+      renderDsnValidationSuccess();
+      renderDsnSummary(getResponseData(response).dsnSummary);
+      setStatus('DSN rules applied to current session.');
+
+      if (currentMode === MODES.REAL_TO_DUMMY && elements.topTextarea.value) {
+        processCurrentInput();
+      }
+    } catch {
+      setStatus('DSN rules could not be applied.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDsnClearRules() {
+    if (!elements) {
+      return;
+    }
+
+    setBusy(true);
+
+    try {
+      const response = await sendRuntimeMessage({ type: MESSAGE_TYPES.CLEAR_DSN_RULES });
+
+      if (!isOkResponse(response)) {
+        setStatus('DSN rules could not be cleared.');
+        return;
+      }
+
+      renderDsnSummary(getResponseData(response).dsnSummary);
+      clearDsnValidation();
+      setStatus('DSN session rules cleared.');
+
+      if (currentMode === MODES.REAL_TO_DUMMY && elements.topTextarea.value) {
+        processCurrentInput();
+      }
+    } catch {
+      setStatus('DSN rules could not be cleared.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function validateCurrentDsn() {
+    if (!elements || !elements.dsnTextarea) {
+      return null;
+    }
+
+    try {
+      const response = await sendRuntimeMessage({
+        type: MESSAGE_TYPES.VALIDATE_DSN_RULES,
+        payload: {
+          text: elements.dsnTextarea.value
+        }
+      });
+
+      if (!isOkResponse(response)) {
+        renderDsnValidationErrors(response && response.error ? [response.error] : []);
+        return null;
+      }
+
+      return getResponseData(response).validation;
+    } catch {
+      return null;
+    }
+  }
+
+  async function refreshDsnSummary() {
+    if (!elements || !elements.dsnSummary) {
+      return;
+    }
+
+    try {
+      const response = await sendRuntimeMessage({ type: MESSAGE_TYPES.GET_DSN_SUMMARY });
+
+      if (isOkResponse(response)) {
+        renderDsnSummary(getResponseData(response).dsnSummary);
+        return;
+      }
+    } catch {
+      // DSN summary is best-effort and must not expose editor contents in errors.
+    }
+
+    renderDsnSummary();
+  }
+
+  function renderDsnValidationResult(validation) {
+    if (validation && validation.ok === true) {
+      renderDsnValidationSuccess();
+      renderDsnSummary(validation.summary);
+      setStatus('Valid DSN ruleset.');
+      return;
+    }
+
+    renderDsnValidationErrors(validation && validation.errors);
+    setStatus('Invalid DSN ruleset.');
+  }
+
+  function renderDsnValidationSuccess() {
+    if (!elements || !elements.dsnValidation) {
+      return;
+    }
+
+    elements.dsnValidation.innerHTML = '';
+    const message = document.createElement('p');
+
+    message.textContent = 'Valid DSN ruleset.';
+    elements.dsnValidation.append(message);
+  }
+
+  function renderDsnValidationErrors(errors = []) {
+    if (!elements || !elements.dsnValidation) {
+      return;
+    }
+
+    const safeErrors = Array.isArray(errors) ? errors.slice(0, 5) : [];
+    const heading = document.createElement('p');
+
+    elements.dsnValidation.innerHTML = '';
+    heading.textContent = 'Invalid DSN ruleset.';
+    elements.dsnValidation.append(heading);
+
+    if (safeErrors.length === 0) {
+      return;
+    }
+
+    const list = document.createElement('ul');
+
+    for (const item of safeErrors) {
+      const row = document.createElement('li');
+      const severity = item.severity || 'error';
+      const path = formatDsnErrorPath(item.path || 'root');
+      const message = item.message || 'Validation error.';
+
+      row.textContent = `${severity}: ${path} - ${message}`;
+      list.append(row);
+    }
+
+    elements.dsnValidation.append(list);
+  }
+
+  function clearDsnValidation() {
+    if (elements && elements.dsnValidation) {
+      elements.dsnValidation.innerHTML = '';
+    }
+  }
+
+  function renderDsnSummary(summary = {}) {
+    if (!elements || !elements.dsnSummary) {
+      return;
+    }
+
+    const count = Number.isFinite(Number(summary.enabledRuleCount))
+      ? Math.max(0, Math.floor(Number(summary.enabledRuleCount)))
+      : 0;
+    const rulesetCount = Number.isFinite(Number(summary.rulesetCount))
+      ? Math.max(0, Math.floor(Number(summary.rulesetCount)))
+      : 0;
+    const hasDsnRules = summary.hasDsnRules === true;
+    const ruleTypes = Array.isArray(summary.ruleTypes) ? summary.ruleTypes.join(', ') : '';
+    const placeholderTypes = Array.isArray(summary.placeholderTypes) ? summary.placeholderTypes.join(', ') : '';
+    const lines = [
+      `DSN rules active: ${count}`,
+      `hasDsnRules: ${hasDsnRules}`,
+      `rulesetCount: ${rulesetCount}`,
+      `enabledRuleCount: ${count}`
+    ];
+
+    if (ruleTypes) {
+      lines.push(`Rule types: ${ruleTypes}`);
+    }
+
+    if (placeholderTypes) {
+      lines.push(`Placeholder types: ${placeholderTypes}`);
+    }
+
+    elements.dsnSummary.textContent = lines.join(' | ');
+  }
+
+  function createDsnTemplateRule(type) {
+    const template = DSN_TEMPLATE_RULES[type];
+
+    if (!template) {
+      throw new Error('Unsupported DSN template type.');
+    }
+
+    return deepClone(template);
+  }
+
+  function createDsnExampleRuleset() {
+    return createDsnRuleset(Object.values(DSN_RULE_TYPES).map((type) => createDsnTemplateRule(type)), {
+      ruleset_id: 'sanitas-safe-example',
+      name: 'Sanitas Safe Example Rules',
+      description: 'Safe dummy DSN examples for local session testing.'
+    });
+  }
+
+  function createDsnTemplateRuleset(type) {
+    return createDsnRuleset([createDsnTemplateRule(type)], {
+      ruleset_id: `sanitas-${String(type).replace(/_/g, '-')}-template`,
+      name: `Sanitas ${String(type).replace(/_/g, ' ')} template`,
+      description: 'Safe dummy DSN template for local session testing.'
+    });
+  }
+
+  function insertDsnTemplateIntoText(inputText, type) {
+    const text = String(inputText || '').trim();
+
+    if (!text) {
+      return {
+        ok: true,
+        text: stringifyDsn(createDsnTemplateRuleset(type))
+      };
+    }
+
+    let parsed;
+
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return {
+        ok: false,
+        error: {
+          path: 'root',
+          severity: 'error',
+          message: 'DSN JSON could not be parsed.'
+        }
+      };
+    }
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || !Array.isArray(parsed.rules)) {
+      return {
+        ok: false,
+        error: {
+          path: 'rules',
+          severity: 'error',
+          message: 'DSN rules must be an array.'
+        }
+      };
+    }
+
+    parsed.rules.push(createDsnTemplateRule(type));
+
+    return {
+      ok: true,
+      text: stringifyDsn(parsed)
+    };
+  }
+
+  function formatDsnJson(inputText) {
+    try {
+      return {
+        ok: true,
+        text: stringifyDsn(JSON.parse(String(inputText || '')))
+      };
+    } catch {
+      return {
+        ok: false,
+        error: {
+          path: 'root',
+          severity: 'error',
+          message: 'DSN JSON could not be parsed.'
+        }
+      };
+    }
+  }
+
+  function stringifyDsn(value) {
+    return `${JSON.stringify(value, null, 2)}\n`;
+  }
+
+  function createDsnRuleset(rules, options = {}) {
+    return {
+      schema_version: '1.0',
+      dsn_type: 'sanitas_safe_rules',
+      ruleset_id: options.ruleset_id || 'sanitas-safe-template',
+      name: options.name || 'Sanitas Safe Template',
+      version: '1.0.0',
+      description: options.description || 'Safe dummy DSN rules for Sanitas.',
+      rules
+    };
+  }
+
+  function deepClone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  function formatDsnErrorPath(path) {
+    return String(path || 'root').replace(/\.([0-9]+)/g, '[$1]');
   }
 
   function scheduleProcessing() {
@@ -951,6 +1677,8 @@
       elements.topTextarea.value = '';
       elements.bottomTextarea.value = '';
       setOutputState(OUTPUT_STATES.EMPTY);
+      renderDsnSummary(getResponseData(response).dsnSummary);
+      clearDsnValidation();
       setStatus('Session cleared.');
     } catch {
       setStatus('Sanitas action failed. Try again.');

@@ -122,11 +122,11 @@
         <div id="dsnValidationErrors" class="validation-errors" aria-live="polite"></div>
 
         <div class="actions compact-actions template-actions" aria-label="DSN template helpers">
-          <button id="insertLiteralTermsTemplateBtn" class="button secondary" type="button" data-dsn-template="literal_terms">Insert literal_terms template</button>
-          <button id="insertLabeledValueTemplateBtn" class="button secondary" type="button" data-dsn-template="labeled_value">Insert labeled_value template</button>
-          <button id="insertPrefixTokenTemplateBtn" class="button secondary" type="button" data-dsn-template="prefix_token">Insert prefix_token template</button>
-          <button id="insertStructuredIdTemplateBtn" class="button secondary" type="button" data-dsn-template="structured_id">Insert structured_id template</button>
-          <button id="insertContextValueTemplateBtn" class="button secondary" type="button" data-dsn-template="context_value">Insert context_value template</button>
+          <button id="insertLiteralTermsTemplateBtn" class="button secondary" type="button" data-dsn-template="literal_terms" title="Detect exact literal terms. Example: Project Titan -> [[CUSTOM_TERM_0001]]. Options: terms, case_sensitive, match_word_boundary.">Insert literal_terms template</button>
+          <button id="insertLabeledValueTemplateBtn" class="button secondary" type="button" data-dsn-template="labeled_value" title="Detect a value after a label. Example: DB_PASS=SafeDummyValue -> DB_PASS=[[DATABASE_SECRET_0001]]. Options: labels, separators, value_mode.">Insert labeled_value template</button>
+          <button id="insertPrefixTokenTemplateBtn" class="button secondary" type="button" data-dsn-template="prefix_token" title="Detect tokens with a known prefix. Example: sk_test_ABCDEF1234567890 -> [[API_KEY_0001]]. Options: prefixes, min_length, max_length, allowed_chars.">Insert prefix_token template</button>
+          <button id="insertStructuredIdTemplateBtn" class="button secondary" type="button" data-dsn-template="structured_id" title="Detect structured IDs. Example: DOC-INT-445566 -> [[DOCUMENT_ID_0001]]. Options: prefixes, segments.">Insert structured_id template</button>
+          <button id="insertContextValueTemplateBtn" class="button secondary" type="button" data-dsn-template="context_value" title="Detect weak values only near trusted context. Example: CVV: 123 -> CVV: [[CARD_SECURITY_CODE_0001]]. Options: context_labels, separators, value_kind.">Insert context_value template</button>
           <button id="insertFullDsnExampleBtn" class="button secondary" type="button">Insert full example ruleset</button>
           <button id="prettyFormatDsnBtn" class="button secondary" type="button">Pretty Format JSON</button>
           <button id="resetDsnExampleBtn" class="button secondary" type="button">Reset to Safe Example</button>
