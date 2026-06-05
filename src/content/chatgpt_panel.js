@@ -934,7 +934,7 @@
     title.className = 'sanitas-dsn-title';
     title.textContent = 'DSN JSON editor';
     guideLink.className = 'sanitas-dsn-guide-link';
-    guideLink.href = chrome.runtime.getURL('docs/dsn-template-guide.md');
+    guideLink.href = chrome.runtime.getURL('src/help/dsn-template-guide.html');
     guideLink.target = '_blank';
     guideLink.rel = 'noopener noreferrer';
     guideLink.textContent = 'DSN Template Guide';

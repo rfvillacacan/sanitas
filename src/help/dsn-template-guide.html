@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sanitas DSN Template Guide</title>
+  <link rel="stylesheet" href="dsn-template-guide.css">
+</head>
+<body>
+  <main class="help-shell">
+    <header class="help-header">
+      <p class="eyebrow">Sanitas</p>
+      <h1>Sanitas DSN Template Guide</h1>
+      <p>DSN rules customize detection without raw regex. Rules are stored only for the current browser session after you validate and apply them.</p>
+    </header>
+
+    <section class="notice" aria-labelledby="safe-use-title">
+      <h2 id="safe-use-title">Safe Use</h2>
+      <p>Use dummy examples while testing. Do not put production logs, customer data, real tokens, real emails, or real IPs into examples or screenshots.</p>
+    </section>
+
+    <section aria-labelledby="workflow-title">
+      <h2 id="workflow-title">Workflow</h2>
+      <ol>
+        <li>Open the Sanitas floating window.</li>
+        <li>Select the DSN Rules tab.</li>
+        <li>Insert a template or the full safe example.</li>
+        <li>Edit the JSON using safe literal values.</li>
+        <li>Click Validate Rules.</li>
+        <li>Click Apply to Current Session.</li>
+        <li>Return to the Text tab and use Clean to test the rule.</li>
+        <li>Click Clear when done to remove mappings, custom terms, DSN rules, and workspace text.</li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="templates-title">
+      <h2 id="templates-title">Templates</h2>
+
+      <article>
+        <h3>literal_terms</h3>
+        <p>Detects exact words or phrases.</p>
+        <pre><code>Project Titan
+-&gt; [[CUSTOM_TERM_0001]]</code></pre>
+        <p><strong>Options:</strong> terms, case_sensitive, match_word_boundary, placeholder_type.</p>
+      </article>
+
+      <article>
+        <h3>labeled_value</h3>
+        <p>Detects a value after a trusted label and replaces only the value.</p>
+        <pre><code>DB_PASS=SafeDummyValue
+-&gt; DB_PASS=[[DATABASE_SECRET_0001]]</code></pre>
+        <p><strong>Options:</strong> labels, separators, value_mode, case_sensitive, placeholder_type.</p>
+      </article>
+
+      <article>
+        <h3>prefix_token</h3>
+        <p>Detects tokens that start with a known prefix.</p>
+        <pre><code>sk_test_ABCDEF1234567890
+-&gt; [[API_KEY_0001]]</code></pre>
+        <p><strong>Options:</strong> prefixes, min_length, max_length, allowed_chars, placeholder_type.</p>
+      </article>
+
+      <article>
+        <h3>structured_id</h3>
+        <p>Detects fixed-format IDs from known prefixes and controlled segments.</p>
+        <pre><code>DOC-INT-445566
+-&gt; [[DOCUMENT_ID_0001]]</code></pre>
+        <p><strong>Options:</strong> prefixes, segments, case_sensitive, placeholder_type.</p>
+      </article>
+
+      <article>
+        <h3>context_value</h3>
+        <p>Detects weak values only when a trusted context label exists.</p>
+        <pre><code>CVV: 123
+-&gt; CVV: [[CARD_SECURITY_CODE_0001]]</code></pre>
+        <p><strong>Options:</strong> context_labels, separators, value_kind, min_length, max_length, placeholder_type.</p>
+      </article>
+    </section>
+
+    <section aria-labelledby="example-title">
+      <h2 id="example-title">Full Safe Example</h2>
+      <pre><code>{
+  "schema_version": "1.0",
+  "dsn_type": "sanitas_safe_rules",
+  "ruleset_id": "sanitas-safe-example",
+  "name": "Sanitas Safe Example Rules",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "PROJECT_NAMES",
+      "type": "literal_terms",
+      "enabled": true,
+      "placeholder_type": "CUSTOM_TERM",
+      "priority": 500,
+      "terms": ["Project Titan", "Acme Corp"],
+      "case_sensitive": false,
+      "match_word_boundary": true
+    },
+    {
+      "id": "DB_PASSWORD",
+      "type": "labeled_value",
+      "enabled": true,
+      "placeholder_type": "DATABASE_SECRET",
+      "priority": 900,
+      "labels": ["DB_PASS"],
+      "separators": ["=", ":"],
+      "value_mode": "until_whitespace",
+      "case_sensitive": false
+    },
+    {
+      "id": "TEST_API_KEY",
+      "type": "prefix_token",
+      "enabled": true,
+      "placeholder_type": "API_KEY",
+      "priority": 950,
+      "prefixes": ["sk_test_"],
+      "min_length": 16,
+      "max_length": 120,
+      "allowed_chars": "alpha_num_underscore_dash",
+      "case_sensitive": true
+    },
+    {
+      "id": "INTERNAL_DOCUMENT_ID",
+      "type": "structured_id",
+      "enabled": true,
+      "placeholder_type": "DOCUMENT_ID",
+      "priority": 700,
+      "prefixes": ["DOC-INT-"],
+      "segments": [
+        {
+          "kind": "digits",
+          "min": 4,
+          "max": 12
+        }
+      ],
+      "case_sensitive": true
+    },
+    {
+      "id": "CARD_SECURITY_CODE",
+      "type": "context_value",
+      "enabled": true,
+      "placeholder_type": "CARD_SECURITY_CODE",
+      "priority": 850,
+      "context_labels": ["CVV"],
+      "separators": [":", "="],
+      "value_kind": "digits",
+      "min_length": 3,
+      "max_length": 4,
+      "case_sensitive": false
+    }
+  ]
+}</code></pre>
+    </section>
+
+    <section aria-labelledby="security-title">
+      <h2 id="security-title">Security Rules</h2>
+      <ul>
+        <li>No raw regex fields are allowed.</li>
+        <li>No JavaScript, executable fields, remote URLs, or dynamic scripts are allowed.</li>
+        <li>Active DSN rules are stored only in chrome.storage.session.</li>
+        <li>Safe summaries do not show terms, labels, prefixes, or matched values.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

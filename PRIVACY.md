@@ -72,3 +72,5 @@ Sanitas documentation pages are hosted at:
 - Homepage: `https://notice.seryalda.com/sanitas-data-sanitizer/`
 - Privacy: `https://notice.seryalda.com/sanitas-data-sanitizer/privacy/`
 - Support: `https://notice.seryalda.com/sanitas-data-sanitizer/support/`
+
+The DSN Template Guide opened from the extension is a packaged local HTML help page. It does not send DSN JSON or workspace text to a server.

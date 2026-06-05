@@ -38,6 +38,8 @@ The content script is scoped to:
 https://chatgpt.com/*
 ```
 
+The packaged DSN Template Guide HTML page and CSS are exposed only as extension web-accessible resources for `https://chatgpt.com/*`. This lets the help link open in Chrome without adding broader host permissions or exposing sensitive storage.
+
 ## No Tracking
 
 Sanitas does not include:
