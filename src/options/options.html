@@ -102,56 +102,21 @@
       <section class="dsn-section" aria-labelledby="dsnRulesTitle">
         <div class="section-header">
           <h2 id="dsnRulesTitle">Custom DSN Rules</h2>
-          <p>Detection Specification Notation JSON rules are session-only. Raw regex fields are rejected.</p>
+          <p>Use the DSN Rules tab in the floating Sanitas window to edit, validate, and apply session-only DSN rules.</p>
         </div>
 
         <ul class="dsn-help">
           <li>DSN rules customize detection without raw regex.</li>
-          <li>Rules are stored only for the current browser session.</li>
-          <li>Use Backup / Export Rules to save your JSON file.</li>
+          <li>DSN rules stay in browser session storage through the service worker.</li>
+          <li>Open the floating window, choose the DSN Rules tab, then use the template guide while editing.</li>
           <li>Clear Session removes active DSN rules.</li>
         </ul>
 
-        <label class="field">
-          <span>DSN JSON editor</span>
-          <small>Load a local JSON file, edit it here, validate it, then apply it to the current browser session.</small>
-          <textarea id="dsnRulesTextarea" name="dsnRulesTextarea" class="dsn-editor-textarea" rows="12" spellcheck="false"></textarea>
-        </label>
-
         <p id="dsnSummary" class="custom-summary">DSN rules active: 0</p>
-        <div id="dsnValidationErrors" class="validation-errors" aria-live="polite"></div>
-
-        <div class="actions compact-actions template-actions" aria-label="DSN template helpers">
-          <button id="insertLiteralTermsTemplateBtn" class="button secondary" type="button" data-dsn-template="literal_terms" title="Detect exact literal terms. Example: Project Titan -> [[CUSTOM_TERM_0001]]. Options: terms, case_sensitive, match_word_boundary.">Insert literal_terms template</button>
-          <button id="insertLabeledValueTemplateBtn" class="button secondary" type="button" data-dsn-template="labeled_value" title="Detect a value after a label. Example: DB_PASS=SafeDummyValue -> DB_PASS=[[DATABASE_SECRET_0001]]. Options: labels, separators, value_mode.">Insert labeled_value template</button>
-          <button id="insertPrefixTokenTemplateBtn" class="button secondary" type="button" data-dsn-template="prefix_token" title="Detect tokens with a known prefix. Example: sk_test_ABCDEF1234567890 -> [[API_KEY_0001]]. Options: prefixes, min_length, max_length, allowed_chars.">Insert prefix_token template</button>
-          <button id="insertStructuredIdTemplateBtn" class="button secondary" type="button" data-dsn-template="structured_id" title="Detect structured IDs. Example: DOC-INT-445566 -> [[DOCUMENT_ID_0001]]. Options: prefixes, segments.">Insert structured_id template</button>
-          <button id="insertContextValueTemplateBtn" class="button secondary" type="button" data-dsn-template="context_value" title="Detect weak values only near trusted context. Example: CVV: 123 -> CVV: [[CARD_SECURITY_CODE_0001]]. Options: context_labels, separators, value_kind.">Insert context_value template</button>
-          <button id="insertFullDsnExampleBtn" class="button secondary" type="button">Insert full example ruleset</button>
-          <button id="prettyFormatDsnBtn" class="button secondary" type="button">Pretty Format JSON</button>
-          <button id="resetDsnExampleBtn" class="button secondary" type="button">Reset to Safe Example</button>
-        </div>
 
         <div class="actions compact-actions">
-          <label class="button secondary file-button">
-            <span>Load DSN JSON File</span>
-            <input id="dsnFileInput" class="visually-hidden" name="dsnFileInput" type="file" accept="application/json,.json">
-          </label>
-          <button id="validateDsnRulesBtn" class="button secondary" type="button">Validate Rules</button>
-          <button id="applyDsnRulesBtn" class="button secondary" type="button">Apply to Current Session</button>
-          <a id="backupDsnRulesLink" class="button secondary link-button" href="#" download="sanitas-dsn-backup.json">Backup / Export Rules</a>
+          <a id="dsnTemplateGuideLink" class="button secondary link-button" href="../../docs/dsn-template-guide.md" target="_blank" rel="noopener noreferrer">DSN Template Guide</a>
           <button id="clearDsnRulesBtn" class="button secondary" type="button">Clear Session Rules</button>
-        </div>
-
-        <div id="dsnReplaceModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="dsnReplaceTitle" hidden>
-          <div class="modal-panel">
-            <h3 id="dsnReplaceTitle">Replace DSN JSON?</h3>
-            <p>This will replace the current editor text with the safe example ruleset. Active session rules are not changed until you apply.</p>
-            <div class="actions compact-actions">
-              <button id="cancelDsnReplaceBtn" class="button secondary" type="button">Cancel</button>
-              <button id="confirmDsnReplaceBtn" class="button primary" type="button">Replace JSON</button>
-            </div>
-          </div>
         </div>
       </section>
 

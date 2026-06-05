@@ -58,12 +58,37 @@
     STRUCTURED_ID: 'structured_id',
     CONTEXT_VALUE: 'context_value'
   });
-  const DSN_TEMPLATE_TOOLTIPS = Object.freeze({
-    [DSN_RULE_TYPES.LITERAL_TERMS]: 'Detect exact literal terms. Example: Project Titan -> [[CUSTOM_TERM_0001]]. Options: terms, case_sensitive, match_word_boundary.',
-    [DSN_RULE_TYPES.LABELED_VALUE]: 'Detect a value after a label. Example: DB_PASS=SafeDummyValue -> DB_PASS=[[DATABASE_SECRET_0001]]. Options: labels, separators, value_mode.',
-    [DSN_RULE_TYPES.PREFIX_TOKEN]: 'Detect tokens with a known prefix. Example: sk_test_ABCDEF1234567890 -> [[API_KEY_0001]]. Options: prefixes, min_length, max_length, allowed_chars.',
-    [DSN_RULE_TYPES.STRUCTURED_ID]: 'Detect structured IDs. Example: DOC-INT-445566 -> [[DOCUMENT_ID_0001]]. Options: prefixes, segments.',
-    [DSN_RULE_TYPES.CONTEXT_VALUE]: 'Detect weak values only near trusted context. Example: CVV: 123 -> CVV: [[CARD_SECURITY_CODE_0001]]. Options: context_labels, separators, value_kind.'
+  const DSN_TEMPLATE_HELP = Object.freeze({
+    [DSN_RULE_TYPES.LITERAL_TERMS]: Object.freeze({
+      title: 'literal_terms',
+      description: 'Detect exact literal terms.',
+      example: 'Project Titan -> [[CUSTOM_TERM_0001]]',
+      options: 'terms, case_sensitive, match_word_boundary'
+    }),
+    [DSN_RULE_TYPES.LABELED_VALUE]: Object.freeze({
+      title: 'labeled_value',
+      description: 'Detect a value after a trusted label.',
+      example: 'DB_PASS=SafeDummyValue -> DB_PASS=[[DATABASE_SECRET_0001]]',
+      options: 'labels, separators, value_mode'
+    }),
+    [DSN_RULE_TYPES.PREFIX_TOKEN]: Object.freeze({
+      title: 'prefix_token',
+      description: 'Detect tokens with a known safe prefix.',
+      example: 'sk_test_ABCDEF1234567890 -> [[API_KEY_0001]]',
+      options: 'prefixes, min_length, max_length, allowed_chars'
+    }),
+    [DSN_RULE_TYPES.STRUCTURED_ID]: Object.freeze({
+      title: 'structured_id',
+      description: 'Detect structured IDs with known prefixes and segments.',
+      example: 'DOC-INT-445566 -> [[DOCUMENT_ID_0001]]',
+      options: 'prefixes, segments'
+    }),
+    [DSN_RULE_TYPES.CONTEXT_VALUE]: Object.freeze({
+      title: 'context_value',
+      description: 'Detect weak values only near trusted context labels.',
+      example: 'CVV: 123 -> CVV: [[CARD_SECURITY_CODE_0001]]',
+      options: 'context_labels, separators, value_kind'
+    })
   });
   const DSN_TEMPLATE_RULES = Object.freeze({
     [DSN_RULE_TYPES.LITERAL_TERMS]: Object.freeze({
@@ -354,16 +379,22 @@
       }
 
       .sanitas-tab-list {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        border: 1px solid var(--sanitas-border);
-        border-radius: 8px;
-        overflow: hidden;
+        display: flex;
+        align-items: end;
+        gap: 2px;
+        border: 0;
+        border-bottom: 1px solid var(--sanitas-border);
+        border-radius: 0;
+        overflow: visible;
       }
 
       .sanitas-tab {
-        min-height: 32px;
-        border: 0;
+        min-width: 96px;
+        min-height: 34px;
+        border: 1px solid transparent;
+        border-bottom: 0;
+        border-radius: 8px 8px 0 0;
+        padding: 0 14px;
         background: transparent;
         color: var(--sanitas-window-color);
         font: 12px/1.2 Arial, sans-serif;
@@ -371,8 +402,12 @@
       }
 
       .sanitas-tab[aria-selected="true"] {
-        background: var(--sanitas-accent);
-        color: #ffffff;
+        position: relative;
+        top: 1px;
+        border-color: var(--sanitas-border);
+        border-bottom-width: 0;
+        background: var(--sanitas-window-background);
+        color: var(--sanitas-accent);
         font-weight: 700;
       }
 
@@ -382,6 +417,11 @@
         min-height: 0;
         flex-direction: column;
         gap: 10px;
+        border: 1px solid var(--sanitas-border);
+        border-top: 0;
+        border-radius: 0 0 8px 8px;
+        padding: 10px;
+        background: var(--sanitas-window-background);
       }
 
       .sanitas-tab-panel[hidden] {
@@ -495,6 +535,53 @@
         color: var(--sanitas-muted);
         font-size: 11px;
         line-height: 1.35;
+      }
+
+      .sanitas-dsn-header {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .sanitas-dsn-title {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+
+      .sanitas-dsn-guide-link {
+        color: var(--sanitas-accent);
+        font-size: 11px;
+        line-height: 1.35;
+        text-decoration: underline;
+      }
+
+      .sanitas-dsn-intro {
+        display: grid;
+        gap: 2px;
+      }
+
+      .sanitas-dsn-help-card {
+        display: grid;
+        gap: 3px;
+        margin: 0;
+        padding: 8px;
+        border: 1px solid var(--sanitas-subtle-border);
+        border-radius: 8px;
+        background: var(--sanitas-accent-soft);
+        color: var(--sanitas-window-color);
+        font-size: 11px;
+        line-height: 1.35;
+      }
+
+      .sanitas-dsn-help-card p {
+        margin: 0;
+      }
+
+      .sanitas-dsn-help-card strong {
+        color: var(--sanitas-accent);
       }
 
       .sanitas-dsn-editor {
@@ -721,6 +808,7 @@
       dsnTextarea: dsnPanel.textarea,
       dsnSummary: dsnPanel.summary,
       dsnValidation: dsnPanel.validation,
+      dsnHelpCard: dsnPanel.helpCard,
       clearModal: clearModal.backdrop,
       clearModalCancelButton: clearModal.cancelButton,
       clearModalConfirmButton: clearModal.confirmButton,
@@ -784,6 +872,7 @@
     const dsnTab = createPanelTab(PANEL_TABS.DSN, 'DSN Rules', 'sanitasDsnTab', 'sanitasDsnPanel');
 
     tabList.className = 'sanitas-tab-list';
+    tabList.dataset.sanitasTabsStyle = 'connected';
     tabList.setAttribute('role', 'tablist');
     tabList.setAttribute('aria-label', 'Sanitas workspace tabs');
     tabList.append(textTab, dsnTab);
@@ -814,7 +903,14 @@
 
   function createDsnEditorPanel() {
     const panel = document.createElement('section');
-    const help = document.createElement('p');
+    const header = document.createElement('div');
+    const title = document.createElement('p');
+    const guideLink = document.createElement('a');
+    const intro = document.createElement('div');
+    const introLineOne = document.createElement('p');
+    const introLineTwo = document.createElement('p');
+    const introLineThree = document.createElement('p');
+    const helpCard = document.createElement('div');
     const textarea = document.createElement('textarea');
     const summary = document.createElement('p');
     const validation = document.createElement('div');
@@ -834,8 +930,30 @@
     panel.setAttribute('aria-labelledby', 'sanitasDsnTab');
     panel.hidden = true;
 
-    help.className = 'sanitas-dsn-help';
-    help.textContent = 'Session-only DSN rules. Raw regex is rejected. Use templates, validate, then apply.';
+    header.className = 'sanitas-dsn-header';
+    title.className = 'sanitas-dsn-title';
+    title.textContent = 'DSN JSON editor';
+    guideLink.className = 'sanitas-dsn-guide-link';
+    guideLink.href = chrome.runtime.getURL('docs/dsn-template-guide.md');
+    guideLink.target = '_blank';
+    guideLink.rel = 'noopener noreferrer';
+    guideLink.textContent = 'DSN Template Guide';
+    header.append(title, guideLink);
+
+    intro.className = 'sanitas-dsn-intro';
+    introLineOne.className = 'sanitas-dsn-help';
+    introLineTwo.className = 'sanitas-dsn-help';
+    introLineThree.className = 'sanitas-dsn-help';
+    introLineOne.textContent = 'DSN rules customize detection without raw regex.';
+    introLineTwo.textContent = 'Rules are stored only for this browser session.';
+    introLineThree.textContent = 'Insert a template, edit the JSON, validate it, then apply.';
+    intro.append(introLineOne, introLineTwo, introLineThree);
+
+    helpCard.className = 'sanitas-dsn-help-card';
+    helpCard.id = 'sanitasDsnTemplateHelp';
+    helpCard.dataset.sanitasDsnHelpCard = 'true';
+    helpCard.setAttribute('role', 'note');
+    renderDsnTemplateHelp(helpCard);
 
     textarea.id = 'sanitasDsnRulesTextarea';
     textarea.className = 'sanitas-dsn-editor';
@@ -877,13 +995,14 @@
     actionRow.append(fullExampleButton, prettyButton, validateButton, applyButton, clearRulesButton);
     buttons.push(fullExampleButton, prettyButton, validateButton, applyButton, clearRulesButton);
 
-    panel.append(help, textarea, summary, validation, templateActions, actionRow);
+    panel.append(header, intro, helpCard, textarea, summary, validation, templateActions, actionRow);
 
     return {
       panel,
       textarea,
       summary,
       validation,
+      helpCard,
       buttons
     };
   }
@@ -892,8 +1011,15 @@
     const button = createButton(`Insert ${type} template`);
 
     button.dataset.sanitasDsnTemplate = type;
-    button.title = DSN_TEMPLATE_TOOLTIPS[type] || 'Insert a safe DSN template.';
+    button.setAttribute('aria-describedby', 'sanitasDsnTemplateHelp');
+    button.addEventListener('focus', () => {
+      showDsnTemplateHelp(type);
+    });
+    button.addEventListener('mouseenter', () => {
+      showDsnTemplateHelp(type);
+    });
     button.addEventListener('click', () => {
+      showDsnTemplateHelp(type);
       handleDsnInsertTemplate(type);
     });
 
@@ -987,6 +1113,45 @@
     if (safeTab === PANEL_TABS.DSN) {
       refreshDsnSummary();
     }
+  }
+
+  function showDsnTemplateHelp(type) {
+    if (!elements || !elements.dsnHelpCard) {
+      return;
+    }
+
+    renderDsnTemplateHelp(elements.dsnHelpCard, type);
+  }
+
+  function renderDsnTemplateHelp(container, type) {
+    if (!container) {
+      return;
+    }
+
+    container.innerHTML = '';
+
+    const help = DSN_TEMPLATE_HELP[type];
+
+    if (!help) {
+      const message = document.createElement('p');
+
+      message.textContent = 'Select a template to see what it detects, example input and output, and common options.';
+      container.append(message);
+      return;
+    }
+
+    const title = document.createElement('p');
+    const description = document.createElement('p');
+    const example = document.createElement('p');
+    const options = document.createElement('p');
+    const strong = document.createElement('strong');
+
+    strong.textContent = help.title;
+    title.append(strong);
+    description.textContent = help.description;
+    example.textContent = `Example: ${help.example}`;
+    options.textContent = `Options: ${help.options}`;
+    container.append(title, description, example, options);
   }
 
   function handleDsnInsertTemplate(type) {

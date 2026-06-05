@@ -8,22 +8,22 @@ Raw regex import is not allowed. DSN rules are validated against a strict allowl
 
 ## Workflow
 
-1. Open Sanitas Options.
-2. Go to Custom DSN Rules.
-3. Use Load DSN JSON File to place a local `.json` file into the textarea.
-4. Use the template buttons if you want a safe starting point.
+1. Open the Sanitas floating window.
+2. Select the `DSN Rules` tab.
+3. Use the template buttons if you want a safe starting point.
+4. Read the visible template guidance card or open the DSN Template Guide link for examples and options.
 5. Edit the JSON directly in the textarea.
 6. Use Pretty Format JSON when you want readable indentation.
 7. Click Validate Rules.
 8. If valid, click Apply to Current Session.
-9. Use Backup / Export Rules to download the current textarea content.
+9. Return to the `Text` tab and use `Clean` to test with dummy input.
 10. Use Clear Session Rules to remove active DSN rules from the current browser session.
 
 Applying rules does not store them in `chrome.storage.local`. Active DSN rules are stored only in `chrome.storage.session` through the service worker and are cleared by Clear Session.
 
 ## Editor Helpers
 
-The Options page DSN editor includes these safe helper controls:
+The floating `DSN Rules` tab includes these safe helper controls:
 
 - Insert literal_terms template
 - Insert labeled_value template
@@ -32,9 +32,8 @@ The Options page DSN editor includes these safe helper controls:
 - Insert context_value template
 - Insert full example ruleset
 - Pretty Format JSON
-- Reset to Safe Example
 
-Template buttons insert valid DSN JSON using dummy values only. If the textarea is empty, single-rule template buttons create a complete one-rule ruleset. If the textarea contains valid DSN JSON, single-rule template buttons append a rule to the existing `rules` array. Insert full example ruleset and Reset to Safe Example use a custom Sanitas modal before replacing non-empty editor text.
+Template buttons insert valid DSN JSON using dummy values only. If the textarea is empty, single-rule template buttons create a complete one-rule ruleset. If the textarea contains valid DSN JSON, single-rule template buttons append a rule to the existing `rules` array. Insert full example ruleset replaces the editor with a complete dummy ruleset.
 
 Pretty Format JSON only parses and formats the textarea content. It does not apply or store rules. Apply to Current Session always validates first; invalid DSN JSON is not stored.
 

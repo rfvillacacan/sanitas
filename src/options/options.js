@@ -6,18 +6,15 @@ import {
   SETTINGS_STORAGE_KEY,
   sanitizeSettings
 } from '../core/settings.js';
-import { initDsnEditor } from './dsn_editor.js';
 
 const elements = {};
 let currentSettings = DEFAULT_SETTINGS;
-let dsnEditor = null;
 
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
   cacheElements();
   bindEvents();
-  dsnEditor = initDsnEditor({ setStatus });
   await loadOptions();
 }
 
@@ -37,6 +34,8 @@ function cacheElements() {
   elements.customTermsSummary = document.getElementById('customTermsSummary');
   elements.saveCustomTermsBtn = document.getElementById('saveCustomTermsBtn');
   elements.clearCustomTermsBtn = document.getElementById('clearCustomTermsBtn');
+  elements.dsnSummary = document.getElementById('dsnSummary');
+  elements.clearDsnRulesBtn = document.getElementById('clearDsnRulesBtn');
   elements.resetBtn = document.getElementById('resetBtn');
   elements.clearSessionBtn = document.getElementById('clearSessionBtn');
   elements.status = document.getElementById('status');
@@ -49,6 +48,7 @@ function bindEvents() {
   elements.resetDetectorsBtn.addEventListener('click', () => renderDetectorSettings(DEFAULT_DETECTOR_SETTINGS));
   elements.saveCustomTermsBtn.addEventListener('click', saveCustomTerms);
   elements.clearCustomTermsBtn.addEventListener('click', clearCustomTerms);
+  elements.clearDsnRulesBtn.addEventListener('click', clearDsnRules);
   elements.resetBtn.addEventListener('click', resetOptions);
   elements.clearSessionBtn.addEventListener('click', clearCurrentSession);
 }
@@ -66,10 +66,12 @@ async function loadOptions() {
 
     renderSettings(currentSettings);
     await refreshCustomTermsSummary();
+    await refreshDsnSummary();
     setStatus('Options loaded.');
   } catch {
     currentSettings = DEFAULT_SETTINGS;
     renderSettings(currentSettings);
+    renderDsnSummary();
     setStatus('Options could not be loaded.');
   }
 }
@@ -108,6 +110,7 @@ async function persistSettings(settings, statusMessage) {
     });
     renderSettings(currentSettings);
     await refreshCustomTermsSummary();
+    await refreshDsnSummary();
     setStatus(statusMessage);
   } catch {
     setStatus('Options could not be saved.');
@@ -122,9 +125,7 @@ function clearCurrentSession() {
     }
 
     renderCustomTermsSummary(response.data && response.data.customTermsSummary);
-    if (dsnEditor) {
-      dsnEditor.refreshSummary(response.data && response.data.dsnSummary);
-    }
+    renderDsnSummary(response.data && response.data.dsnSummary);
     elements.customTermsInput.value = '';
     setStatus('Session cleared.');
   });
@@ -158,6 +159,18 @@ function clearCustomTerms() {
     elements.customTermsInput.value = '';
     renderCustomTermsSummary(response.data && response.data.customTermsSummary);
     setStatus('Custom terms cleared.');
+  });
+}
+
+function clearDsnRules() {
+  chrome.runtime.sendMessage({ type: MESSAGE_TYPES.CLEAR_DSN_RULES }, (response) => {
+    if (chrome.runtime.lastError || !response || response.ok !== true) {
+      setStatus('DSN rules could not be cleared.');
+      return;
+    }
+
+    renderDsnSummary(response.data && response.data.dsnSummary);
+    setStatus('DSN session rules cleared.');
   });
 }
 
@@ -195,6 +208,32 @@ function renderCustomTermsSummary(summary = {}) {
   const count = Number.isFinite(Number(summary.count)) ? Math.max(0, Math.floor(Number(summary.count))) : 0;
 
   elements.customTermsSummary.textContent = `Custom terms active: ${count}`;
+}
+
+function refreshDsnSummary() {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: MESSAGE_TYPES.GET_DSN_SUMMARY }, (response) => {
+      if (!chrome.runtime.lastError && response && response.ok === true) {
+        renderDsnSummary(response.data && response.data.dsnSummary);
+      } else {
+        renderDsnSummary();
+      }
+
+      resolve();
+    });
+  });
+}
+
+function renderDsnSummary(summary = {}) {
+  const count = Number.isFinite(Number(summary.enabledRuleCount))
+    ? Math.max(0, Math.floor(Number(summary.enabledRuleCount)))
+    : 0;
+  const rulesetCount = Number.isFinite(Number(summary.rulesetCount))
+    ? Math.max(0, Math.floor(Number(summary.rulesetCount)))
+    : 0;
+  const hasDsnRules = summary.hasDsnRules === true;
+
+  elements.dsnSummary.textContent = `DSN rules active: ${count} | hasDsnRules: ${hasDsnRules} | rulesetCount: ${rulesetCount} | enabledRuleCount: ${count}`;
 }
 
 function renderDetectorSettings(detectors) {
