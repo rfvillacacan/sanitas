@@ -105,7 +105,7 @@ Custom terms and DSN rules may be sensitive, so Sanitas stores active values onl
 
 The floating Sanitas window has the main `DSN Rules` tab. Use it when you want session-only DSN JSON rules while testing in ChatGPT. Insert a safe template, read the visible guidance card or open the DSN Template Guide, validate the JSON, apply it to the current session, then return to the `Text` tab and use `Clean`.
 
-The in-extension DSN Template Guide opens as a browser-readable packaged HTML page, not as raw Markdown.
+The in-extension DSN Template Guide opens as a browser-readable packaged HTML tutorial manual, not as raw Markdown. It explains how to choose the right rule type, edit templates, validate rules, test with dummy text, and troubleshoot missed detections.
 
 ## Troubleshooting
 

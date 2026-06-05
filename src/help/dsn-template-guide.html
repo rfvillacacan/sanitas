@@ -11,80 +11,632 @@
     <header class="help-header">
       <p class="eyebrow">Sanitas</p>
       <h1>Sanitas DSN Template Guide</h1>
-      <p>DSN rules customize detection without raw regex. Rules are stored only for the current browser session after you validate and apply them.</p>
+      <p>DSN rules customize detection without raw regex. This guide explains how to turn a requirement into a working session-only rule, validate it, apply it, and test it with dummy text.</p>
     </header>
 
-    <section class="notice" aria-labelledby="safe-use-title">
-      <h2 id="safe-use-title">Safe Use</h2>
-      <p>Use dummy examples while testing. Do not put production logs, customer data, real tokens, real emails, or real IPs into examples or screenshots.</p>
+    <nav class="toc" aria-label="Guide sections">
+      <a href="#what-dsn-is">What DSN Rules Are</a>
+      <a href="#quick-start">Quick Start</a>
+      <a href="#decision-table">Choose a Rule Type</a>
+      <a href="#field-reference">Field Reference</a>
+      <a href="#template-tutorials">Template Tutorials</a>
+      <a href="#requirements">Build From Requirements</a>
+      <a href="#validation">Validation Errors</a>
+      <a href="#troubleshooting">Troubleshooting</a>
+      <a href="#complete-example">Complete Example</a>
+    </nav>
+
+    <section id="what-dsn-is" aria-labelledby="what-dsn-is-title">
+      <h2 id="what-dsn-is-title">What DSN Rules Are</h2>
+      <p>DSN means Detection Specification Notation. A DSN ruleset is safe JSON that tells Sanitas how to detect extra values before the normal Clean workflow replaces them with placeholders.</p>
+      <p>Use DSN when the built-in detectors are not enough. For example, you can hide exact project names, values after labels, tokens with known prefixes, structured internal IDs, or short codes that are only sensitive near a trusted label.</p>
+      <div class="callout">
+        <h3>Why DSN Does Not Allow Raw Regex</h3>
+        <p>Raw regex import is not allowed because complex patterns can be unsafe, confusing, slow, or too broad. DSN gives users controlled rule types instead: literal text, labels, prefixes, fixed segments, and trusted context labels. There is no JavaScript, no executable logic, no remote URL loading, and no raw regex field.</p>
+      </div>
     </section>
 
-    <section aria-labelledby="workflow-title">
-      <h2 id="workflow-title">Workflow</h2>
-      <ol>
-        <li>Open the Sanitas floating window.</li>
-        <li>Select the DSN Rules tab.</li>
-        <li>Insert a template or the full safe example.</li>
-        <li>Edit the JSON using safe literal values.</li>
-        <li>Click Validate Rules.</li>
-        <li>Click Apply to Current Session.</li>
-        <li>Return to the Text tab and use Clean to test the rule.</li>
-        <li>Click Clear when done to remove mappings, custom terms, DSN rules, and workspace text.</li>
+    <section id="quick-start" aria-labelledby="quick-start-title">
+      <h2 id="quick-start-title">Quick Start</h2>
+      <ol class="steps">
+        <li><strong>Choose the right rule type.</strong> Use the decision table below to match your requirement to one of the five supported rule types.</li>
+        <li><strong>Insert a template.</strong> Open the Sanitas floating window, choose the DSN Rules tab, and click the matching template button.</li>
+        <li><strong>Edit only the safe fields.</strong> Change labels, prefixes, terms, segment lengths, placeholder type, and priority. Do not add pattern, regex, script, URL, or code fields.</li>
+        <li><strong>Validate Rules.</strong> Click Validate Rules. If validation fails, fix the listed path and message.</li>
+        <li><strong>Apply to Current Session.</strong> Validation alone does not activate the rules. Apply stores the validated rules for the current browser session only.</li>
+        <li><strong>Test in the Text tab.</strong> Switch to Text, choose Clean, paste dummy input, and confirm the output contains placeholders.</li>
+        <li><strong>Clear Session Rules when finished.</strong> Clear active DSN rules when testing is done. The main Clear button also removes DSN rules, mappings, custom terms, and workspace text.</li>
       </ol>
     </section>
 
-    <section aria-labelledby="templates-title">
-      <h2 id="templates-title">Templates</h2>
+    <section id="decision-table" aria-labelledby="decision-table-title">
+      <h2 id="decision-table-title">Which Rule Type Should I Use?</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Requirement example</th>
+              <th>Use this rule type</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>I want to hide exact project names.</td>
+              <td><code>literal_terms</code></td>
+              <td>Use when the exact words or phrases are known.</td>
+            </tr>
+            <tr>
+              <td>I want to hide values after labels like <code>DB_PASS=</code>.</td>
+              <td><code>labeled_value</code></td>
+              <td>Use when a trusted label appears before the sensitive value.</td>
+            </tr>
+            <tr>
+              <td>I want to hide tokens starting with <code>sk_test_</code>.</td>
+              <td><code>prefix_token</code></td>
+              <td>Use when a token begins with a known prefix and has controlled characters.</td>
+            </tr>
+            <tr>
+              <td>I want to hide IDs like <code>DOC-INT-445566</code>.</td>
+              <td><code>structured_id</code></td>
+              <td>Use when values have a predictable prefix and segment format.</td>
+            </tr>
+            <tr>
+              <td>I want to hide short weak values only near a label like <code>CVV: 123</code>.</td>
+              <td><code>context_value</code></td>
+              <td>Use when the value is too generic to detect safely without a nearby context label.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-      <article>
+    <section id="field-reference" aria-labelledby="field-reference-title">
+      <h2 id="field-reference-title">Complete Field Reference</h2>
+      <p>Every rule has common fields. Each rule type also has its own type-specific fields.</p>
+
+      <h3>Top-Level Ruleset Fields</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Required</th>
+              <th>What it does</th>
+              <th>Allowed values</th>
+              <th>Example value</th>
+              <th>Common mistakes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>schema_version</code></td>
+              <td>Yes</td>
+              <td>Declares the DSN schema version.</td>
+              <td><code>"1.0"</code></td>
+              <td><code>"1.0"</code></td>
+              <td>Using a number or unsupported version.</td>
+            </tr>
+            <tr>
+              <td><code>dsn_type</code></td>
+              <td>Yes</td>
+              <td>Identifies the JSON as a Sanitas safe ruleset.</td>
+              <td><code>"sanitas_safe_rules"</code></td>
+              <td><code>"sanitas_safe_rules"</code></td>
+              <td>Omitting it or changing the name.</td>
+            </tr>
+            <tr>
+              <td><code>ruleset_id</code></td>
+              <td>Yes</td>
+              <td>Gives the ruleset a safe identifier.</td>
+              <td>Letters, numbers, underscore, dot, dash; starts with a letter or number.</td>
+              <td><code>"safe-demo-rules"</code></td>
+              <td>Spaces or symbols such as <code>#</code>.</td>
+            </tr>
+            <tr>
+              <td><code>name</code></td>
+              <td>No</td>
+              <td>Human-readable ruleset name.</td>
+              <td>Short text.</td>
+              <td><code>"Safe Demo Rules"</code></td>
+              <td>Putting private values in the name.</td>
+            </tr>
+            <tr>
+              <td><code>version</code></td>
+              <td>Yes</td>
+              <td>Ruleset version label.</td>
+              <td>Non-empty text up to 40 characters.</td>
+              <td><code>"1.0.0"</code></td>
+              <td>Leaving it blank.</td>
+            </tr>
+            <tr>
+              <td><code>description</code></td>
+              <td>No</td>
+              <td>Short explanation for the ruleset.</td>
+              <td>Text up to the supported limit.</td>
+              <td><code>"Dummy DSN examples."</code></td>
+              <td>Including private values in the description.</td>
+            </tr>
+            <tr>
+              <td><code>rules</code></td>
+              <td>Yes</td>
+              <td>Array of rule objects.</td>
+              <td>An array; up to the supported rule count.</td>
+              <td><code>[{ ... }]</code></td>
+              <td>Using an object instead of an array.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Common Rule Fields</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Required</th>
+              <th>What the field does</th>
+              <th>Allowed values</th>
+              <th>Example value</th>
+              <th>Common mistakes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>id</code></td>
+              <td>Yes</td>
+              <td>Unique rule identifier used in validation and debugging summaries.</td>
+              <td>Starts with a letter; letters, numbers, and underscores only.</td>
+              <td><code>"PROJECT_NAMES"</code></td>
+              <td>Spaces, dashes, or starting with a number.</td>
+            </tr>
+            <tr>
+              <td><code>type</code></td>
+              <td>Yes</td>
+              <td>Selects the matching strategy.</td>
+              <td><code>literal_terms</code>, <code>labeled_value</code>, <code>prefix_token</code>, <code>structured_id</code>, <code>context_value</code></td>
+              <td><code>"prefix_token"</code></td>
+              <td>Using unsupported names such as <code>regex</code>.</td>
+            </tr>
+            <tr>
+              <td><code>enabled</code></td>
+              <td>Yes</td>
+              <td>Turns the rule on or off.</td>
+              <td>Boolean <code>true</code> or <code>false</code>.</td>
+              <td><code>true</code></td>
+              <td>Using <code>"true"</code> as a string.</td>
+            </tr>
+            <tr>
+              <td><code>placeholder_type</code></td>
+              <td>Yes</td>
+              <td>Controls the placeholder prefix Sanitas creates.</td>
+              <td>Uppercase letters, numbers, and underscores; starts with a letter.</td>
+              <td><code>"API_KEY"</code></td>
+              <td>Lowercase names, spaces, or punctuation.</td>
+            </tr>
+            <tr>
+              <td><code>priority</code></td>
+              <td>No</td>
+              <td>Controls which DSN match wins when matches overlap. Higher DSN priority wins.</td>
+              <td>Integer from 1 to 9999. Default is 800.</td>
+              <td><code>950</code></td>
+              <td>Giving a generic rule higher priority than a specific secret rule.</td>
+            </tr>
+            <tr>
+              <td><code>case_sensitive</code></td>
+              <td>No</td>
+              <td>Controls whether text case must match exactly.</td>
+              <td>Boolean. Default is <code>false</code>.</td>
+              <td><code>false</code></td>
+              <td>Setting <code>true</code> and then testing different capitalization.</td>
+            </tr>
+            <tr>
+              <td><code>description</code></td>
+              <td>No</td>
+              <td>Short rule note.</td>
+              <td>Text.</td>
+              <td><code>"Dummy project names."</code></td>
+              <td>Putting private terms in the description.</td>
+            </tr>
+            <tr>
+              <td><code>max_matches</code></td>
+              <td>No</td>
+              <td>Limits matches returned by one rule.</td>
+              <td>Integer from 1 to the supported per-rule maximum.</td>
+              <td><code>100</code></td>
+              <td>Expecting more replacements than the limit allows.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="template-tutorials" aria-labelledby="template-tutorials-title">
+      <h2 id="template-tutorials-title">Full Tutorial For Each Rule Template</h2>
+
+      <article class="tutorial" id="literal-terms">
         <h3>literal_terms</h3>
-        <p>Detects exact words or phrases.</p>
-        <pre><code>Project Titan
--&gt; [[CUSTOM_TERM_0001]]</code></pre>
-        <p><strong>Options:</strong> terms, case_sensitive, match_word_boundary, placeholder_type.</p>
+        <p><strong>Use case:</strong> Hide exact project names, customer names, product codenames, or organization names you already know.</p>
+        <pre class="json-block"><code>{
+  "id": "PROJECT_NAMES",
+  "type": "literal_terms",
+  "enabled": true,
+  "placeholder_type": "CUSTOM_TERM",
+  "priority": 500,
+  "terms": ["Project Titan", "Acme Corp"],
+  "case_sensitive": false,
+  "match_word_boundary": true
+}</code></pre>
+        <div class="example-grid">
+          <div>
+            <h4>Input text before sanitization</h4>
+            <pre><code>We discussed Project Titan with Acme Corp.</code></pre>
+          </div>
+          <div>
+            <h4>Output text after sanitization</h4>
+            <pre><code>We discussed [[CUSTOM_TERM_0001]] with [[CUSTOM_TERM_0002]].</code></pre>
+          </div>
+        </div>
+        <ul>
+          <li><code>terms</code>: array of exact words or phrases. Minimum length is 3 characters. Empty values are not allowed.</li>
+          <li><code>case_sensitive</code>: <code>false</code> matches <code>Project Titan</code> and <code>PROJECT TITAN</code>; <code>true</code> requires exact case.</li>
+          <li><code>match_word_boundary</code>: <code>true</code> prevents matching inside a larger word. Use <code>false</code> only when the term may be embedded.</li>
+          <li><code>placeholder_type</code>: controls tokens such as <code>[[CUSTOM_TERM_0001]]</code>.</li>
+        </ul>
+        <p><strong>When to use it:</strong> use it for known exact text. <strong>When not to use it:</strong> do not use it for values that vary by prefix, label, or structured numeric segments. <strong>Common mistakes:</strong> misspelling the term, making the term too short, or setting <code>match_word_boundary</code> to <code>true</code> when the text is attached to punctuation-like characters you did not expect.</p>
       </article>
 
-      <article>
+      <article class="tutorial" id="labeled-value">
         <h3>labeled_value</h3>
-        <p>Detects a value after a trusted label and replaces only the value.</p>
-        <pre><code>DB_PASS=SafeDummyValue
--&gt; DB_PASS=[[DATABASE_SECRET_0001]]</code></pre>
-        <p><strong>Options:</strong> labels, separators, value_mode, case_sensitive, placeholder_type.</p>
+        <p><strong>Use case:</strong> Detects values after trusted labels. It replaces only the value, not the label. Good labels include <code>DB_PASS=</code>, <code>API_SECRET:</code>, <code>TOKEN=</code>, and <code>CLIENT_ID=</code>.</p>
+        <pre class="json-block"><code>{
+  "id": "DB_PASSWORD",
+  "type": "labeled_value",
+  "enabled": true,
+  "placeholder_type": "DATABASE_SECRET",
+  "priority": 900,
+  "labels": ["DB_PASS", "DATABASE_PASSWORD"],
+  "separators": ["=", ":"],
+  "value_mode": "until_whitespace",
+  "case_sensitive": false
+}</code></pre>
+        <div class="example-grid">
+          <div>
+            <h4>Input text before sanitization</h4>
+            <pre><code>DB_PASS=SafeDummyValue123</code></pre>
+          </div>
+          <div>
+            <h4>Output text after sanitization</h4>
+            <pre><code>DB_PASS=[[DATABASE_SECRET_0001]]</code></pre>
+          </div>
+        </div>
+        <ul>
+          <li><code>labels</code>: trusted words that appear before the value. Labels must be strings.</li>
+          <li><code>separators</code>: strings that connect the label to the value, such as <code>=</code> or <code>:</code>.</li>
+          <li><code>value_mode</code>: <code>until_whitespace</code>, <code>until_line_end</code>, <code>quoted_value</code>, or <code>token</code>.</li>
+          <li><code>case_sensitive</code>: <code>false</code> lets <code>db_pass</code> match <code>DB_PASS</code>.</li>
+        </ul>
+        <p><strong>When to use it:</strong> use it when the label is stable and trusted. <strong>When not to use it:</strong> do not use it for unlabeled values or labels that appear in normal prose. <strong>Common mistakes:</strong> forgetting the separator, using the wrong value mode, or expecting the label itself to be replaced.</p>
       </article>
 
-      <article>
+      <article class="tutorial" id="prefix-token">
         <h3>prefix_token</h3>
-        <p>Detects tokens that start with a known prefix.</p>
-        <pre><code>sk_test_ABCDEF1234567890
--&gt; [[API_KEY_0001]]</code></pre>
-        <p><strong>Options:</strong> prefixes, min_length, max_length, allowed_chars, placeholder_type.</p>
+        <p><strong>Use case:</strong> Detects tokens that start with known prefixes. Good for API keys, test keys, and internal tokens.</p>
+        <pre class="json-block"><code>{
+  "id": "TEST_API_KEY",
+  "type": "prefix_token",
+  "enabled": true,
+  "placeholder_type": "API_KEY",
+  "priority": 950,
+  "prefixes": ["sk_test_", "pk_test_"],
+  "min_length": 16,
+  "max_length": 120,
+  "allowed_chars": "alpha_num_underscore_dash",
+  "case_sensitive": true
+}</code></pre>
+        <div class="example-grid">
+          <div>
+            <h4>Input text before sanitization</h4>
+            <pre><code>The key is sk_test_ABCDEF1234567890.</code></pre>
+          </div>
+          <div>
+            <h4>Output text after sanitization</h4>
+            <pre><code>The key is [[API_KEY_0001]].</code></pre>
+          </div>
+        </div>
+        <ul>
+          <li><code>prefixes</code>: known token starts such as <code>sk_test_</code>.</li>
+          <li><code>min_length</code> and <code>max_length</code>: total token length, including the prefix.</li>
+          <li><code>allowed_chars</code>: supported values are <code>alpha_num</code>, <code>alpha_num_dash</code>, <code>alpha_num_underscore</code>, <code>alpha_num_underscore_dash</code>, <code>base64url</code>, <code>hex</code>, and <code>token_safe</code>.</li>
+          <li><code>case_sensitive</code>: usually <code>true</code> for keys because prefixes often have exact case.</li>
+        </ul>
+        <p><strong>When to use it:</strong> use it for tokens with known prefixes. <strong>When not to use it:</strong> do not use it for values without predictable prefixes. <strong>Common mistakes:</strong> setting <code>min_length</code> higher than the real token length, choosing <code>hex</code> for tokens that contain underscores, or forgetting that punctuation after the token is not included.</p>
       </article>
 
-      <article>
+      <article class="tutorial" id="structured-id">
         <h3>structured_id</h3>
-        <p>Detects fixed-format IDs from known prefixes and controlled segments.</p>
-        <pre><code>DOC-INT-445566
--&gt; [[DOCUMENT_ID_0001]]</code></pre>
-        <p><strong>Options:</strong> prefixes, segments, case_sensitive, placeholder_type.</p>
+        <p><strong>Use case:</strong> Detects IDs with predictable format. Good for internal document IDs, ticket IDs, asset IDs, and invoice IDs.</p>
+        <pre class="json-block"><code>{
+  "id": "INTERNAL_DOCUMENT_ID",
+  "type": "structured_id",
+  "enabled": true,
+  "placeholder_type": "DOCUMENT_ID",
+  "priority": 700,
+  "prefixes": ["DOC-INT-"],
+  "segments": [
+    {
+      "kind": "digits",
+      "min": 4,
+      "max": 12
+    }
+  ],
+  "case_sensitive": true
+}</code></pre>
+        <div class="example-grid">
+          <div>
+            <h4>Input text before sanitization</h4>
+            <pre><code>Please review DOC-INT-445566.</code></pre>
+          </div>
+          <div>
+            <h4>Output text after sanitization</h4>
+            <pre><code>Please review [[DOCUMENT_ID_0001]].</code></pre>
+          </div>
+        </div>
+        <ul>
+          <li><code>prefixes</code>: one or more fixed starts, such as <code>DOC-INT-</code>.</li>
+          <li><code>segments</code>: ordered pieces after the prefix. Supported segment kinds are <code>digits</code>, <code>alpha</code>, <code>alnum</code>, <code>hex</code>, and <code>literal</code>.</li>
+          <li>For <code>digits</code>, <code>alpha</code>, <code>alnum</code>, and <code>hex</code>, use <code>min</code> and <code>max</code>.</li>
+          <li>For a <code>literal</code> segment, use <code>value</code>. Do not add <code>min</code> or <code>max</code> to a literal segment.</li>
+        </ul>
+        <p><strong>When to use it:</strong> use it for fixed formats. <strong>When not to use it:</strong> do not use it for values that are free-form or label-based. <strong>Common mistakes:</strong> forgetting a literal dash segment when the format has a second dash, or using an unsupported segment kind.</p>
       </article>
 
-      <article>
+      <article class="tutorial" id="context-value">
         <h3>context_value</h3>
-        <p>Detects weak values only when a trusted context label exists.</p>
-        <pre><code>CVV: 123
--&gt; CVV: [[CARD_SECURITY_CODE_0001]]</code></pre>
-        <p><strong>Options:</strong> context_labels, separators, value_kind, min_length, max_length, placeholder_type.</p>
+        <p><strong>Use case:</strong> Detects weak values only when a trusted context label appears. Good for CVV, PIN, OTP, short codes, or expiration-like values. This is safer than detecting all 3-digit numbers because it only matches near configured labels.</p>
+        <pre class="json-block"><code>{
+  "id": "CARD_SECURITY_CODE",
+  "type": "context_value",
+  "enabled": true,
+  "placeholder_type": "CARD_SECURITY_CODE",
+  "priority": 850,
+  "context_labels": ["CVV", "CVC"],
+  "separators": [":", "="],
+  "value_kind": "digits",
+  "min_length": 3,
+  "max_length": 4,
+  "case_sensitive": false
+}</code></pre>
+        <div class="example-grid">
+          <div>
+            <h4>Input text before sanitization</h4>
+            <pre><code>CVV: 123</code></pre>
+          </div>
+          <div>
+            <h4>Output text after sanitization</h4>
+            <pre><code>CVV: [[CARD_SECURITY_CODE_0001]]</code></pre>
+          </div>
+        </div>
+        <ul>
+          <li><code>context_labels</code>: trusted labels such as <code>CVV</code>, <code>CVC</code>, <code>PIN</code>, or <code>OTP</code>.</li>
+          <li><code>separators</code>: strings between label and value, such as <code>:</code> or <code>=</code>.</li>
+          <li><code>value_kind</code>: supported values are <code>digits</code>, <code>alnum</code>, <code>token</code>, <code>date_mm_yy</code>, and <code>date_mm_yyyy</code>.</li>
+          <li><code>min_length</code> and <code>max_length</code>: allowed length for the detected value. Date kinds have fixed formats.</li>
+        </ul>
+        <p><strong>When to use it:</strong> use it when a short value is sensitive only next to a trusted label. <strong>When not to use it:</strong> do not use it when every value with the same shape should be hidden everywhere. <strong>Common mistakes:</strong> wrong separator, wrong value kind, or a length range that excludes the value.</p>
       </article>
     </section>
 
-    <section aria-labelledby="example-title">
-      <h2 id="example-title">Full Safe Example</h2>
-      <pre><code>{
+    <section id="requirements" aria-labelledby="requirements-title">
+      <h2 id="requirements-title">Build Rules From Requirements</h2>
+      <p>This is the core workflow: describe what must be hidden, choose the safest rule type, edit one template, validate it, apply it, then test with dummy text.</p>
+
+      <article>
+        <h3>Requirement: I want to hide my company internal ticket IDs like INC-2026-000123.</h3>
+        <p><strong>Best rule type:</strong> <code>structured_id</code>. <strong>Why:</strong> the value has a fixed prefix and controlled numeric segments.</p>
+        <pre class="json-block"><code>{
+  "id": "INTERNAL_TICKET_ID",
+  "type": "structured_id",
+  "enabled": true,
+  "placeholder_type": "TICKET_ID",
+  "priority": 750,
+  "prefixes": ["INC-"],
+  "segments": [
+    { "kind": "digits", "min": 4, "max": 4 },
+    { "kind": "literal", "value": "-" },
+    { "kind": "digits", "min": 6, "max": 6 }
+  ],
+  "case_sensitive": true
+}</code></pre>
+        <pre><code>Test input: Ticket INC-2026-000123 needs review.
+Expected output: Ticket [[TICKET_ID_0001]] needs review.</code></pre>
+      </article>
+
+      <article>
+        <h3>Requirement: I want to hide anything after API_TOKEN=.</h3>
+        <p><strong>Best rule type:</strong> <code>labeled_value</code>. <strong>Why:</strong> the trusted label identifies the sensitive value.</p>
+        <pre class="json-block"><code>{
+  "id": "API_TOKEN_VALUE",
+  "type": "labeled_value",
+  "enabled": true,
+  "placeholder_type": "API_TOKEN",
+  "priority": 900,
+  "labels": ["API_TOKEN"],
+  "separators": ["="],
+  "value_mode": "until_whitespace",
+  "case_sensitive": false
+}</code></pre>
+        <pre><code>Test input: API_TOKEN=SafeDummyToken123 next step.
+Expected output: API_TOKEN=[[API_TOKEN_0001]] next step.</code></pre>
+      </article>
+
+      <article>
+        <h3>Requirement: I want to hide exact customer names or project names.</h3>
+        <p><strong>Best rule type:</strong> <code>literal_terms</code>. <strong>Why:</strong> the exact phrases are known before testing.</p>
+        <pre class="json-block"><code>{
+  "id": "KNOWN_NAMES",
+  "type": "literal_terms",
+  "enabled": true,
+  "placeholder_type": "CUSTOM_TERM",
+  "priority": 500,
+  "terms": ["Project Titan", "Acme Corp"],
+  "case_sensitive": false,
+  "match_word_boundary": true
+}</code></pre>
+        <pre><code>Test input: Project Titan met Acme Corp.
+Expected output: [[CUSTOM_TERM_0001]] met [[CUSTOM_TERM_0002]].</code></pre>
+      </article>
+    </section>
+
+    <section id="priority" aria-labelledby="priority-title">
+      <h2 id="priority-title">Priority Explained</h2>
+      <p>For DSN rules, higher numeric <code>priority</code> wins when two DSN matches overlap. The sanitizer resolves overlaps before replacing text. If priorities tie, the longer match is favored, then the earlier text position.</p>
+      <p>Example: an API key prefix rule should have higher priority than a generic literal term rule. If a generic term could match part of <code>sk_test_ABCDEF1234567890</code>, the <code>prefix_token</code> API key rule should use a higher priority such as <code>950</code> so the whole token becomes <code>[[API_KEY_0001]]</code>.</p>
+      <p>Built-in detectors also participate in overlap resolution. Keep DSN rules specific and give the most sensitive, most precise rules the highest priority.</p>
+    </section>
+
+    <section id="validation" aria-labelledby="validation-title">
+      <h2 id="validation-title">Validation Errors and Fixes</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Error pattern</th>
+              <th>Likely cause</th>
+              <th>Fix</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Missing <code>schema_version</code></td>
+              <td>Top-level field is absent.</td>
+              <td>Add <code>"schema_version": "1.0"</code>.</td>
+            </tr>
+            <tr>
+              <td>Missing <code>rules</code> array</td>
+              <td><code>rules</code> is absent or not an array.</td>
+              <td>Add <code>"rules": [ ... ]</code>.</td>
+            </tr>
+            <tr>
+              <td>Unsupported rule type</td>
+              <td><code>type</code> is not one of the five supported names.</td>
+              <td>Use <code>literal_terms</code>, <code>labeled_value</code>, <code>prefix_token</code>, <code>structured_id</code>, or <code>context_value</code>.</td>
+            </tr>
+            <tr>
+              <td>Missing required field</td>
+              <td>A rule lacks <code>id</code>, <code>type</code>, <code>enabled</code>, or <code>placeholder_type</code>.</td>
+              <td>Add the field shown in the validation path, such as <code>rules.0.placeholder_type</code>.</td>
+            </tr>
+            <tr>
+              <td>Wrong field type, such as string instead of array</td>
+              <td>A list field like <code>terms</code>, <code>labels</code>, or <code>prefixes</code> is written as one string.</td>
+              <td>Use an array: <code>"terms": ["Project Titan"]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>min_length greater than max_length</code></td>
+              <td>The minimum is larger than the maximum.</td>
+              <td>Lower <code>min_length</code> or raise <code>max_length</code>.</td>
+            </tr>
+            <tr>
+              <td>Empty terms, labels, or prefixes</td>
+              <td>The list is empty or only contains blank strings.</td>
+              <td>Add at least one dummy-safe value while testing.</td>
+            </tr>
+            <tr>
+              <td>Unsupported <code>allowed_chars</code></td>
+              <td>The value is not in the supported list.</td>
+              <td>Use <code>alpha_num</code>, <code>alpha_num_dash</code>, <code>alpha_num_underscore</code>, <code>alpha_num_underscore_dash</code>, <code>base64url</code>, <code>hex</code>, or <code>token_safe</code>.</td>
+            </tr>
+            <tr>
+              <td>Invalid JSON syntax</td>
+              <td>Missing comma, extra comma, wrong quote, or unclosed bracket.</td>
+              <td>Click Pretty Format JSON. If it fails, fix the JSON syntax first.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="security" aria-labelledby="security-title">
+      <h2 id="security-title">Security Rules</h2>
+      <div class="callout danger">
+        <h3>Keep DSN Safe</h3>
+        <ul>
+          <li>No raw regex.</li>
+          <li>No JavaScript.</li>
+          <li>No remote URLs.</li>
+          <li>No executable logic.</li>
+          <li>No production secrets in examples.</li>
+          <li>Use dummy examples only.</li>
+          <li>Rules are stored only for the current browser session.</li>
+          <li>Clear session after testing.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="troubleshooting" aria-labelledby="troubleshooting-title">
+      <h2 id="troubleshooting-title">Troubleshooting</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Problem</th>
+              <th>What to check</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Rule validates but does not detect text.</td>
+              <td>Confirm you clicked Apply to Current Session, then test in the Text tab with Clean selected.</td>
+            </tr>
+            <tr>
+              <td>Case sensitivity issue.</td>
+              <td>If the input case varies, set <code>case_sensitive</code> to <code>false</code>.</td>
+            </tr>
+            <tr>
+              <td>Wrong separator.</td>
+              <td>Add the separator used in the input, such as <code>=</code>, <code>:</code>, or <code> - </code>.</td>
+            </tr>
+            <tr>
+              <td>Value too short because <code>min_length</code> is too high.</td>
+              <td>Lower <code>min_length</code> or use a rule type that better fits the value.</td>
+            </tr>
+            <tr>
+              <td>Value too long because <code>max_length</code> is too low.</td>
+              <td>Raise <code>max_length</code> within the supported range.</td>
+            </tr>
+            <tr>
+              <td>Wrong <code>allowed_chars</code>.</td>
+              <td>If the token contains underscore or dash, do not use <code>alpha_num</code> or <code>hex</code>.</td>
+            </tr>
+            <tr>
+              <td>Forgot to click Apply to Current Session.</td>
+              <td>Validate only checks JSON. Apply activates the rules for the session.</td>
+            </tr>
+            <tr>
+              <td>Testing in the wrong tab.</td>
+              <td>Use the Text tab, choose Clean, and paste dummy input into Input.</td>
+            </tr>
+            <tr>
+              <td>Session was cleared.</td>
+              <td>Clearing session removes DSN rules. Apply the rules again before testing.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="complete-example" aria-labelledby="complete-example-title">
+      <h2 id="complete-example-title">Complete Example Ruleset</h2>
+      <p>This complete ruleset uses every supported rule type. Select the JSON, paste it into the DSN Rules editor, validate it, apply it, then test with the sample input.</p>
+      <pre class="json-block"><code>{
   "schema_version": "1.0",
   "dsn_type": "sanitas_safe_rules",
   "ruleset_id": "sanitas-safe-example",
   "name": "Sanitas Safe Example Rules",
   "version": "1.0.0",
+  "description": "Safe dummy DSN examples for local session testing.",
   "rules": [
     {
       "id": "PROJECT_NAMES",
@@ -102,7 +654,7 @@
       "enabled": true,
       "placeholder_type": "DATABASE_SECRET",
       "priority": 900,
-      "labels": ["DB_PASS"],
+      "labels": ["DB_PASS", "DATABASE_PASSWORD"],
       "separators": ["=", ":"],
       "value_mode": "until_whitespace",
       "case_sensitive": false
@@ -113,7 +665,7 @@
       "enabled": true,
       "placeholder_type": "API_KEY",
       "priority": 950,
-      "prefixes": ["sk_test_"],
+      "prefixes": ["sk_test_", "pk_test_"],
       "min_length": 16,
       "max_length": 120,
       "allowed_chars": "alpha_num_underscore_dash",
@@ -141,7 +693,7 @@
       "enabled": true,
       "placeholder_type": "CARD_SECURITY_CODE",
       "priority": 850,
-      "context_labels": ["CVV"],
+      "context_labels": ["CVV", "CVC"],
       "separators": [":", "="],
       "value_kind": "digits",
       "min_length": 3,
@@ -150,16 +702,72 @@
     }
   ]
 }</code></pre>
+      <div class="example-grid">
+        <div>
+          <h3>Sample input text</h3>
+          <pre><code>Project Titan uses DB_PASS=SafeDummyValue123.
+The test key is sk_test_ABCDEF1234567890.
+Please review DOC-INT-445566.
+CVV: 123
+Acme Corp owns the demo account.</code></pre>
+        </div>
+        <div>
+          <h3>Expected sanitized output</h3>
+          <pre><code>[[CUSTOM_TERM_0001]] uses DB_PASS=[[DATABASE_SECRET_0001]].
+The test key is [[API_KEY_0001]].
+Please review [[DOCUMENT_ID_0001]].
+CVV: [[CARD_SECURITY_CODE_0001]]
+[[CUSTOM_TERM_0002]] owns the demo account.</code></pre>
+        </div>
+      </div>
     </section>
 
-    <section aria-labelledby="security-title">
-      <h2 id="security-title">Security Rules</h2>
-      <ul>
-        <li>No raw regex fields are allowed.</li>
-        <li>No JavaScript, executable fields, remote URLs, or dynamic scripts are allowed.</li>
-        <li>Active DSN rules are stored only in chrome.storage.session.</li>
-        <li>Safe summaries do not show terms, labels, prefixes, or matched values.</li>
-      </ul>
+    <section id="template-buttons" aria-labelledby="template-buttons-title">
+      <h2 id="template-buttons-title">Template Button Behavior</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Button</th>
+              <th>What it inserts</th>
+              <th>What to edit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Insert literal_terms template</td>
+              <td>A starter exact-term rule.</td>
+              <td>Edit <code>terms</code>, <code>placeholder_type</code>, and case behavior.</td>
+            </tr>
+            <tr>
+              <td>Insert labeled_value template</td>
+              <td>A starter label-plus-value rule.</td>
+              <td>Edit <code>labels</code>, <code>separators</code>, and <code>value_mode</code>.</td>
+            </tr>
+            <tr>
+              <td>Insert prefix_token template</td>
+              <td>A starter known-prefix token rule.</td>
+              <td>Edit <code>prefixes</code>, length bounds, and <code>allowed_chars</code>.</td>
+            </tr>
+            <tr>
+              <td>Insert structured_id template</td>
+              <td>A starter fixed-format ID rule.</td>
+              <td>Edit <code>prefixes</code> and <code>segments</code>.</td>
+            </tr>
+            <tr>
+              <td>Insert context_value template</td>
+              <td>A starter trusted-context short-value rule.</td>
+              <td>Edit <code>context_labels</code>, <code>separators</code>, <code>value_kind</code>, and length bounds.</td>
+            </tr>
+            <tr>
+              <td>Insert full example ruleset</td>
+              <td>A complete safe sample containing all five rule types.</td>
+              <td>Use it for learning, then replace dummy values with your current-session test values.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Inserted JSON is only a starter template. Validate it before applying, and test it with dummy text before relying on it.</p>
     </section>
   </main>
 </body>
