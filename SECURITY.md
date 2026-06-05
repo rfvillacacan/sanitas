@@ -75,7 +75,7 @@ Safe examples:
 - `user@example.com`
 - `example.test`
 - `192.0.2.10`
-- `Ahmed Khan`
+- `Maria Santos`
 
 Do not test with real logs, real customer data, real emails, real tokens, real IPs, or real secrets.
 

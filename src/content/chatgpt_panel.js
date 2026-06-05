@@ -581,8 +581,8 @@
     wrapper.setAttribute('role', 'radiogroup');
     wrapper.setAttribute('aria-label', 'Sanitas translator mode');
     wrapper.append(
-      createModeButton(MODES.REAL_TO_DUMMY, 'Real -> Dummy'),
-      createModeButton(MODES.DUMMY_TO_REAL, 'Dummy -> Real')
+      createModeButton(MODES.REAL_TO_DUMMY, 'Clean'),
+      createModeButton(MODES.DUMMY_TO_REAL, 'Restore')
     );
 
     return wrapper;

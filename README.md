@@ -41,11 +41,11 @@ Sanitas is local-first:
 
 If the window is collapsed, click the vertical `Sanitas` side tab to expand it. You can drag the side tab up or down if it covers page content.
 
-## Use Real -> Dummy
+## Use Clean
 
 Use this mode before sending text to ChatGPT.
 
-1. Select `Real -> Dummy`.
+1. Select `Clean`.
 2. Paste or type text into the `Input` box.
 3. Sanitas automatically writes sanitized output in the `Output` box.
 4. Click `Copy`.
@@ -56,21 +56,21 @@ Use this mode before sending text to ChatGPT.
 Example input:
 
 ```txt
-User Ahmed Khan from ahmed.khan@example.com failed login from 192.0.2.10.
+User Maria Santos from user@example.com failed login from 192.0.2.10.
 ```
 
 Example sanitized output:
 
 ```txt
-User Ahmed Khan from [[EMAIL_0001]] failed login from [[IPV4_0001]].
+User Maria Santos from [[EMAIL_0001]] failed login from [[IPV4_0001]].
 ```
 
-## Use Dummy -> Real
+## Use Restore
 
 Use this mode after ChatGPT replies with placeholders.
 
 1. Copy the ChatGPT response that contains Sanitas placeholders.
-2. Select `Dummy -> Real` in Sanitas.
+2. Select `Restore` in Sanitas.
 3. Paste the placeholder response into the `Input` box.
 4. Sanitas automatically restores known placeholders in the `Output` box.
 5. Copy the restored output only if you need it locally.
