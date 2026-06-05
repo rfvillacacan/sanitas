@@ -1,0 +1,110 @@
+:root {
+  color-scheme: light dark;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: Canvas;
+  color: CanvasText;
+}
+
+.popup-shell {
+  padding: 16px;
+}
+
+.popup-header {
+  margin-bottom: 16px;
+}
+
+.popup-header h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.popup-header p {
+  margin: 4px 0 0;
+  color: color-mix(in srgb, CanvasText 72%, transparent);
+  font-size: 13px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
+  border-radius: 8px;
+}
+
+.control-row strong,
+.control-row span {
+  display: block;
+}
+
+.control-row strong {
+  font-size: 14px;
+}
+
+.control-row span {
+  margin-top: 3px;
+  font-size: 12px;
+  color: color-mix(in srgb, CanvasText 68%, transparent);
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.switch input {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button.secondary {
+  border-color: color-mix(in srgb, CanvasText 22%, transparent);
+  background: color-mix(in srgb, CanvasText 6%, Canvas);
+  color: CanvasText;
+}
+
+.button.danger {
+  border-color: color-mix(in srgb, #dc2626 42%, transparent);
+  background: color-mix(in srgb, #dc2626 12%, Canvas);
+  color: CanvasText;
+}
+
+.status {
+  min-height: 18px;
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: color-mix(in srgb, CanvasText 70%, transparent);
+}

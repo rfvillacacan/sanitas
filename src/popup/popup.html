@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sanitas</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="popup-shell">
+    <header class="popup-header">
+      <h1>Sanitas</h1>
+      <p>The Data Sanitizer</p>
+    </header>
+
+    <section class="control-row" aria-label="Panel state">
+      <div>
+        <strong>ChatGPT panel</strong>
+        <span>Enable the Sanitas floating window on chatgpt.com.</span>
+      </div>
+      <label class="switch">
+        <input id="panelToggle" type="checkbox">
+        <span>On</span>
+      </label>
+    </section>
+
+    <div class="actions">
+      <a class="button secondary" href="https://chatgpt.com/" target="_blank" rel="noreferrer">Open ChatGPT</a>
+      <button id="optionsBtn" class="button secondary" type="button">Options</button>
+      <button id="clearSessionBtn" class="button danger" type="button">Clear Session</button>
+    </div>
+
+    <p id="status" class="status" role="status">Loading Sanitas settings...</p>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

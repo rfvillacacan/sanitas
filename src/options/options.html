@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sanitas Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="options-shell">
+    <header class="options-header">
+      <h1>Sanitas Options</h1>
+      <p>Safe preferences for the ChatGPT panel.</p>
+    </header>
+
+    <p class="notice">
+      Sanitas stores temporary restore mappings in the browser session only. This options page stores non-sensitive preferences only.
+    </p>
+
+    <form id="optionsForm" class="settings-form">
+      <label class="field">
+        <span>Floating window width</span>
+        <input id="panelWidth" name="panelWidth" type="number" min="320" max="520" step="1" inputmode="numeric">
+      </label>
+
+      <label class="field">
+        <span>Theme</span>
+        <select id="theme" name="theme">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
+
+      <label class="check-row">
+        <input id="autoWrapPrompt" name="autoWrapPrompt" type="checkbox">
+        <span>
+          <strong>Prompt wrapper</strong>
+          <small>Recommended. Tells ChatGPT to preserve Sanitas placeholders exactly.</small>
+        </span>
+      </label>
+
+      <label class="check-row">
+        <input id="showCaptureHelper" name="showCaptureHelper" type="checkbox">
+        <span>
+          <strong>Capture helper text</strong>
+          <small>Show capture reminders in the panel.</small>
+        </span>
+      </label>
+
+      <label class="check-row">
+        <input id="showMappingPreview" name="showMappingPreview" type="checkbox">
+        <span>
+          <strong>Mapping preview</strong>
+          <small>Show safe mapping metadata only. Original values are never shown here.</small>
+        </span>
+      </label>
+
+      <label class="check-row">
+        <input id="customTermsEnabled" name="customTermsEnabled" type="checkbox">
+        <span>
+          <strong>Custom terms enabled</strong>
+          <small>Use session custom terms during Real to Dummy sanitization.</small>
+        </span>
+      </label>
+
+      <section class="detector-section" aria-labelledby="detectorControlsTitle">
+        <div class="section-header">
+          <h2 id="detectorControlsTitle">Detector Controls</h2>
+          <p>Disabling detectors may allow sensitive data to remain unsanitized.</p>
+        </div>
+
+        <div id="detectorControls" class="detector-grid"></div>
+
+        <div class="actions compact-actions">
+          <button id="enableAllDetectorsBtn" class="button secondary" type="button">Enable All</button>
+          <button id="disableAllDetectorsBtn" class="button secondary" type="button">Disable All</button>
+          <button id="resetDetectorsBtn" class="button secondary" type="button">Reset Detector Defaults</button>
+        </div>
+      </section>
+
+      <section class="custom-terms-section" aria-labelledby="customTermsTitle">
+        <div class="section-header">
+          <h2 id="customTermsTitle">Session Custom Terms</h2>
+          <p>Custom terms may be sensitive. They are stored only for the current browser session and are cleared when the session is cleared.</p>
+        </div>
+
+        <label class="field">
+          <span>Session custom terms</span>
+          <small>Enter one custom term per line.</small>
+          <textarea id="customTermsInput" name="customTermsInput" rows="5" spellcheck="false"></textarea>
+        </label>
+
+        <p id="customTermsSummary" class="custom-summary">Custom terms active: 0</p>
+
+        <div class="actions compact-actions">
+          <button id="saveCustomTermsBtn" class="button secondary" type="button">Save for Current Session</button>
+          <button id="clearCustomTermsBtn" class="button secondary" type="button">Clear Custom Terms</button>
+        </div>
+      </section>
+
+      <section class="dsn-section" aria-labelledby="dsnRulesTitle">
+        <div class="section-header">
+          <h2 id="dsnRulesTitle">Custom DSN Rules</h2>
+          <p>Detection Specification Notation JSON rules are session-only. Raw regex fields are rejected.</p>
+        </div>
+
+        <ul class="dsn-help">
+          <li>DSN rules customize detection without raw regex.</li>
+          <li>Rules are stored only for the current browser session.</li>
+          <li>Use Backup / Export Rules to save your JSON file.</li>
+          <li>Clear Session removes active DSN rules.</li>
+        </ul>
+
+        <label class="field">
+          <span>DSN JSON editor</span>
+          <small>Load a local JSON file, edit it here, validate it, then apply it to the current browser session.</small>
+          <textarea id="dsnRulesTextarea" name="dsnRulesTextarea" class="dsn-editor-textarea" rows="12" spellcheck="false"></textarea>
+        </label>
+
+        <p id="dsnSummary" class="custom-summary">DSN rules active: 0</p>
+        <div id="dsnValidationErrors" class="validation-errors" aria-live="polite"></div>
+
+        <div class="actions compact-actions template-actions" aria-label="DSN template helpers">
+          <button id="insertLiteralTermsTemplateBtn" class="button secondary" type="button" data-dsn-template="literal_terms">Insert literal_terms template</button>
+          <button id="insertLabeledValueTemplateBtn" class="button secondary" type="button" data-dsn-template="labeled_value">Insert labeled_value template</button>
+          <button id="insertPrefixTokenTemplateBtn" class="button secondary" type="button" data-dsn-template="prefix_token">Insert prefix_token template</button>
+          <button id="insertStructuredIdTemplateBtn" class="button secondary" type="button" data-dsn-template="structured_id">Insert structured_id template</button>
+          <button id="insertContextValueTemplateBtn" class="button secondary" type="button" data-dsn-template="context_value">Insert context_value template</button>
+          <button id="insertFullDsnExampleBtn" class="button secondary" type="button">Insert full example ruleset</button>
+          <button id="prettyFormatDsnBtn" class="button secondary" type="button">Pretty Format JSON</button>
+          <button id="resetDsnExampleBtn" class="button secondary" type="button">Reset to Safe Example</button>
+        </div>
+
+        <div class="actions compact-actions">
+          <label class="button secondary file-button">
+            <span>Load DSN JSON File</span>
+            <input id="dsnFileInput" class="visually-hidden" name="dsnFileInput" type="file" accept="application/json,.json">
+          </label>
+          <button id="validateDsnRulesBtn" class="button secondary" type="button">Validate Rules</button>
+          <button id="applyDsnRulesBtn" class="button secondary" type="button">Apply to Current Session</button>
+          <a id="backupDsnRulesLink" class="button secondary link-button" href="#" download="sanitas-dsn-backup.json">Backup / Export Rules</a>
+          <button id="clearDsnRulesBtn" class="button secondary" type="button">Clear Session Rules</button>
+        </div>
+
+        <div id="dsnReplaceModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="dsnReplaceTitle" hidden>
+          <div class="modal-panel">
+            <h3 id="dsnReplaceTitle">Replace DSN JSON?</h3>
+            <p>This will replace the current editor text with the safe example ruleset. Active session rules are not changed until you apply.</p>
+            <div class="actions compact-actions">
+              <button id="cancelDsnReplaceBtn" class="button secondary" type="button">Cancel</button>
+              <button id="confirmDsnReplaceBtn" class="button primary" type="button">Replace JSON</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="button primary" type="submit">Save</button>
+        <button id="resetBtn" class="button secondary" type="button">Reset to Defaults</button>
+        <button id="clearSessionBtn" class="button danger" type="button">Clear Current Session</button>
+      </div>
+    </form>
+
+    <p id="status" class="status" role="status">Loading options...</p>
+  </main>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>
